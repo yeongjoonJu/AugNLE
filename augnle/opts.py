@@ -20,6 +20,7 @@ def get_args():
                             help=" The value at which to clip gradients ")
     optim_args.add_argument( "--temperature",type=int, default=0, help=" Temperature ")
     optim_args.add_argument('--requires_grad', action="store_true", help='requiring gradients')
+    optim_args.add_argument('--num_workers', type=int, default=1, help='The number of workers')
     
     
     """Data related arguments"""

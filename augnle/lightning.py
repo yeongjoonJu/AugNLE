@@ -1,10 +1,7 @@
 import os
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.utils.data
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
 from torch.optim import AdamW
 from pytorch_lightning import LightningModule
 from transformers import (
@@ -49,7 +46,7 @@ class PromptTuning(LightningModule):
         setattr(self.config, 'prefix_seq_len', 20)
         
         self.tokenizer = T5Tokenizer.from_pretrained('t5-large')
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<situation>', '<answer>']})
+        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
         
         self.config.img_size = self.img_size
         self.config.max_seq_length = self.max_seq_length 
@@ -83,7 +80,7 @@ class PromptTuning(LightningModule):
     def training_step(self,  batch, batch_idx):
         
         if self.task_name == "task_A":
-            img, _, input_ids, labels, _, attention_mask = batch.values()
+            p_id, img, _, input_ids, labels, _, attention_mask = batch.values()
             img_embeddings = self.image_encoder(img)
             img_embeddings = self.mlp_vit(img_embeddings)
         
@@ -94,9 +91,9 @@ class PromptTuning(LightningModule):
                 inputs_embeds=img_embeddings,
                 labels=labels,
                 )
-        # Task A
+        # Task B
         else:
-            _, _, input_ids, labels, _, attention_mask = batch.values()
+            p_id, _, _, input_ids, labels, _, attention_mask = batch.values()
             outputs = self(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -105,6 +102,8 @@ class PromptTuning(LightningModule):
                 labels=labels,
                 )
         loss = outputs.loss
+        
+        
         self.log("train_loss", loss)
 
         return loss
@@ -118,7 +117,7 @@ class PromptTuning(LightningModule):
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         if self.task_name == "task_A":
-            img, _, input_ids, labels, _, attention_mask = batch.values()
+            p_id, img, _, input_ids, labels, _, attention_mask = batch.values()
             img_embeddings = self.image_encoder(img)
             img_embeddings = self.mlp_vit(img_embeddings)
         
@@ -131,7 +130,7 @@ class PromptTuning(LightningModule):
                 )
         # Task A
         else:
-            _, _, input_ids, labels, _, attention_mask = batch.values()
+            p_id, _, _, input_ids, labels, _, attention_mask = batch.values()
             outputs = self(
                 input_ids=input_ids,
                 attention_mask=attention_mask,

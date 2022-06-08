@@ -12,8 +12,10 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 AVAIL_GPUS = torch.cuda.device_count()
 
 if __name__ == '__main__':
-  seed_everything(42)
+ 
   args = opts.get_args()
+  seed_everything(args.seed)
+  
   args.filename = 'ckpt_stats_' + str(args.load_from_epoch) + '.tar'
   wandb_logger = WandbLogger(project="Aug_NLX", name =args.experiment_name)
   dm = VQAXDataModule(args)
@@ -40,7 +42,7 @@ if __name__ == '__main__':
   trainer = Trainer(max_epochs=args.max_epochs,
                   accelerator = "gpu",
                   gpus= args.ngpu,
-                  strategy = "ddp",
+                  strategy = "deepspeed",
                   val_check_interval=args.val_check_interval,
                   accumulate_grad_batches = args.gradient_accumulation_steps,
                   gradient_clip_val=args.gradient_cliping,

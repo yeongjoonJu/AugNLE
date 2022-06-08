@@ -25,23 +25,23 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
 
     def get_prompt(self, batch_size):
         prefix_tokens = self.prefix_tokens.unsqueeze(0).expand(batch_size, -1).to(self.device)#batch,30
-        promt_output = self.prefix_encoder(prefix_tokens)
-        bsz, seq_len, emb_dim = promt_output.shape
-        #promt_output = promt_output.view(bsz, seq_len, self.n_layers*2, self.n_heads, self.n_embeds)
-        promt_output = self.dropout(promt_output)
-        #past_key_values = past_key_values.permute([2,0,3,1,4]).split(2)
+        prompt_output = self.prefix_encoder(prefix_tokens)
+        bsz, seq_len, emb_dim = prompt_output.shape
+        # prompt_output = prompt_output.view(bsz, seq_len, self.n_layers*2, self.n_heads, self.n_embeds)
+        prompt_output = self.dropout(prompt_output)
+        # past_key_values = past_key_values.permute([2,0,3,1,4]).split(2)
 
-        return promt_output
+        return prompt_output
     
-    def get_situation_idx(self, ids):
-        situation_token = self.tokenizer.encode("<situation>")[0]
-        situation_idx = []
+    def get_scene_idx(self, ids):
+        scene_token = self.tokenizer.encode("<scene>")[0]
+        scene_idx = []
         for i in ids:
             for num,j in enumerate(i):
-                if j == torch.Tensor([situation_token]).to(self.device):
-                    situation_idx.append(num)
+                if j == torch.Tensor([scene_token]).to(self.device):
+                    scene_idx.append(num)
                     break
-        return situation_idx
+        return scene_idx
     
     def forward(self,
                 input_ids=None,
@@ -68,9 +68,9 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
         ids_embeds = self.shared(input_ids)
         
-        # Fill situation embedding
+        # Fill scene embedding
         if self.task_name == "task_A":
-            sit_idx = self.get_situation_idx(input_ids)
+            sit_idx = self.get_scene_idx(input_ids)
             for idx,location in enumerate(sit_idx):
                 ids_embeds[idx][location:location+196, :] = inputs_embeds[idx]
     

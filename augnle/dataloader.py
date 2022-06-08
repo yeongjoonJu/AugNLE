@@ -12,6 +12,7 @@ import logging
 from torch.utils.data import random_split
 logger = logging.getLogger(__name__)
 from tqdm import tqdm
+import numpy as np
 
 class VQAXDataModule(LightningDataModule):
     def __init__(
@@ -35,49 +36,40 @@ class VQAXDataModule(LightningDataModule):
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
         self.tokenizer = T5Tokenizer.from_pretrained('t5-large')
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<situation>', '<answer>']})
+        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
+        
+        self.train_path = self.vqax_data_dir + "vqaX_train.json"
+        self.val_path = self.vqax_data_dir + "vqaX_val.json"
+        self.test_path = self.vqax_data_dir + "vqaX_test.json"
         
         
     def setup(self,stage=None):
         self.dataset = {}
-        
-            
-        data = json.load(open(self.vqax_data_dir, 'r'))
-        train_dataset = self.get_data(data, is_train = True)
+        self.dataset["train"] = self.get_data(self.train_path, is_train = True)
+        self.dataset["validation"] = self.get_data(self.val_path, is_train = False)
+        #self.dataset["test"] = self.get_test_data(self.test_path)
         
         if self.hparams.fewshot is not None:
-            few_length = int(len(data) * self.hparams.fewshot)
-            train_dataset = train_dataset[:few_length]
-            
-        train_len = int(len(train_dataset) * 0.8)
-        val_len = len(train_dataset) - train_len
-        self.dataset["train"], self.dataset["validation"] = random_split(train_dataset, [train_len,val_len])
+            np.random.seed(self.hparams.seed)
+            few_length_train = int(len(self.dataset["train"]) * self.hparams.fewshot)
+            few_length_val = int(len(self.dataset["validation"]) * self.hparams.fewshot)
+            self.dataset["train"] = list(np.random.choice(self.dataset["train"], few_length_train))
+            self.dataset["validation"] = list(np.random.choice(self.dataset["validation"], few_length_val))
         
-    def get_data(self,data,is_train = False):
-        if self.task_A:
-            cached_features_file = os.path.join(
-                self.hparams.ckpt_path,# cache directory
-                "cached_{}_{}_{}".format(
-                    "train" if is_train else "dev",
-                    "VQAX",
-                    "taskA"
-                ),
-            )
-        else:
-            cached_features_file = os.path.join(
-                self.hparams.ckpt_path,# cache directory
-                "cached_{}_{}_{}".format(
-                    "train" if is_train else "dev",
-                    "VQAX",
-                    "taskB"
-                ),
-            )
-            
+    def get_data(self,data_path,is_train = False):
+        cached_features_file = os.path.join(
+            self.hparams.ckpt_path,# cache directory
+            "cached_{}_{}".format(
+                "train" if is_train else "dev",
+                "VQAX",
+            ),
+        )
         if os.path.exists(cached_features_file):
                     logger.info("Loading features from cached file %s", cached_features_file)
                     features_and_dataset = torch.load(cached_features_file)
                     datasets = features_and_dataset["datasets"]
         else:
+            data = json.load(open(data_path, 'r'))
             ids_list = list(data.keys())
             index_tracker = {k: len(v['explanation']) - 1 for k,v in data.items()}
             ids_list = list(data.keys())
@@ -101,13 +93,13 @@ class VQAXDataModule(LightningDataModule):
                 if exp_idx > 0:
                     index_tracker[quention_id] -= 1    # decrease usage
                     
-                q_segment_id, s_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<situation>', '<answer>', '<explanation>'])
+                q_segment_id, s_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<scene>', '<answer>', '<explanation>'])
 
                 question_tokens = self.tokenizer.tokenize(text_q)
                 segment_ids = [q_segment_id] * len(question_tokens)
 
-                # situation
-                situation_tag = self.tokenizer.tokenize("situation:")
+                # scene
+                scene_tag = self.tokenizer.tokenize("scene:")
 
                 # answer
                 answer_tokens =  self.tokenizer.tokenize(text_a)
@@ -122,12 +114,14 @@ class VQAXDataModule(LightningDataModule):
 
                 # Task A -> Q, I, A -> E
                 if self.task_A:
-                    tokens = question_tokens + situation_tag + ["<situation>"]*256 + answer_tag + answer_tokens + [self.tokenizer.eos_token]
-                    segment_ids = segment_ids + [s_segment_id]*256 + [e_segment_id] * (len(answer_tokens) +2)
+                    prompt_id = torch.tensor([1])
+                    tokens = question_tokens  + answer_tag + answer_tokens  + scene_tag + ["<scene>"]*196 + [self.tokenizer.eos_token]
+                    segment_ids = segment_ids + [s_segment_id]*196 + [e_segment_id] * (len(answer_tokens) +2)
                     labels = explanation_tokens + [self.tokenizer.eos_token]
 
                 # Task B -> Q, E -> A
                 else:
+                    prompt_id = torch.tensor([0])
                     tokens = question_tokens + explanation_tag + explanation_tokens + [self.tokenizer.eos_token]
                     segment_ids = segment_ids + [e_segment_id] * (len(tokens) - len(segment_ids))
                     labels = answer_tokens + [self.tokenizer.eos_token]
@@ -166,16 +160,16 @@ class VQAXDataModule(LightningDataModule):
                 qid =quention_id
                 qid = torch.LongTensor([int(quention_id)])
 
-                datasets.append({"img": img, "qid" : qid, "input_ids": input_ids, "labels": labels, "segment_ids" : segment_ids, "attention_mask" : attention_mask})
+                datasets.append({"prompt_id": prompt_id, "img": img, "qid" : qid, "input_ids": input_ids, "labels": labels, "segment_ids" : segment_ids, "attention_mask" : attention_mask})
             torch.save({"datasets": datasets}, cached_features_file)
 
         return datasets
         
     def train_dataloader(self):
-        return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.train_batch_size, pin_memory=True, num_workers=0)
+        return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.train_batch_size, pin_memory=True, num_workers=self.hparams.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset["validation"], batch_size=self.train_batch_size, pin_memory=True, num_workers=0)
+        return DataLoader(self.dataset["validation"], shuffle=True, batch_size=self.train_batch_size, pin_memory=True, num_workers=self.hparams.num_workers)
     
     #def test_dataloader(self):
-    #    return DataLoader(self.dataset["test"], batch_size=self.train_batch_size, pin_memory=True, num_workers=4)
+    #    return DataLoader(self.dataset["test"], batch_size=self.train_batch_size, pin_memory=True, num_workers=self.hparams.num_workers)
