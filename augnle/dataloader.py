@@ -1,181 +1,124 @@
-import torchvision.transforms as transforms
-from transformers import T5Tokenizer
-import json
-import utils
-import torch
-from PIL import Image
-import torch
-from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader
-import os
-import logging
-from torch.utils.data import random_split
-logger = logging.getLogger(__name__)
+import json, os, random
 from tqdm import tqdm
+from PIL import Image
 
-class VQAXDataModule(LightningDataModule):
-    def __init__(
-        self,
-        hparams,
-        **kwargs,
-    ):
+import torch
+from torch.utils.data import DataLoader, random_split
+import torchvision.transforms as transforms
+
+from pytorch_lightning import LightningDataModule
+from transformers import T5Tokenizer, AutoFeatureExtractor
+
+import utils
+
+import logging
+logger = logging.getLogger(__name__)
+
+class BaseDataModule(LightningDataModule):
+    def __init__(self, hparams, **kwargs,):
         super().__init__()
-        self.save_hyperparameters(hparams)
-        self.task_A = self.hparams.task_A
-        self.img_size = self.hparams.img_size
-        self.vqax_data_dir = self.hparams.annotation_data_dir
-        self.coco_data_dir = self.hparams.coco_data_dir
-        self.input_max_seq_length = self.hparams.input_max_seq_length#500
-        self.output_max_seq_length = self.hparams.output_max_seq_length# 30
-        self.train_batch_size = self.hparams.train_batch_size
-        self.eval_batch_size = self.hparams.eval_batch_size        
+        sefl.save_hyperparameters(hparams)
+        self.cfg = hparams
 
-        self.img_transform = transforms.Compose([transforms.Resize((self.img_size,self.img_size)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        random.seed(self.cfg.seed)
 
-        self.tokenizer = T5Tokenizer.from_pretrained('t5-large')
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<situation>', '<answer>']})
-        
-        
-    def setup(self,stage=None):
+        self.tokenizer = T5Tokenizer.from_pretrained(self.cfg.lm_backbone)
+        # n_add_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
+
+        # The number of few-shot data
+        if hparams.fewshot_ratio > 0:
+            self.fewshot_num = int(len(anno) * hparams.fewshot_ratio)
+        else:
+            self.fewshot_num = hparams.fewshot_num
+
         self.dataset = {}
-        
-            
-        data = json.load(open(self.vqax_data_dir, 'r'))
-        train_dataset = self.get_data(data, is_train = True)
-        
-        if self.hparams.fewshot is not None:
-            few_length = int(len(data) * self.hparams.fewshot)
-            train_dataset = train_dataset[:few_length]
-            
-        train_len = int(len(train_dataset) * 0.8)
-        val_len = len(train_dataset) - train_len
-        self.dataset["train"], self.dataset["validation"] = random_split(train_dataset, [train_len,val_len])
-        
-    def get_data(self,data,is_train = False):
-        if self.task_A:
-            cached_features_file = os.path.join(
-                self.hparams.ckpt_path,# cache directory
-                "cached_{}_{}_{}".format(
-                    "train" if is_train else "dev",
-                    "VQAX",
-                    "taskA"
-                ),
-            )
-        else:
-            cached_features_file = os.path.join(
-                self.hparams.ckpt_path,# cache directory
-                "cached_{}_{}_{}".format(
-                    "train" if is_train else "dev",
-                    "VQAX",
-                    "taskB"
-                ),
-            )
-            
-        if os.path.exists(cached_features_file):
-                    logger.info("Loading features from cached file %s", cached_features_file)
-                    features_and_dataset = torch.load(cached_features_file)
-                    datasets = features_and_dataset["datasets"]
-        else:
-            ids_list = list(data.keys())
-            index_tracker = {k: len(v['explanation']) - 1 for k,v in data.items()}
-            ids_list = list(data.keys())
-            for k,v in tqdm(data.items(), desc= "Data to list and dictionary..."):   
-                if len(v['explanation']) > 1:   # some questions have more than one explanation
-            # duplicate them for loading. -1 because one explanation is already in ids_list
-                    ids_list += [str(k)] * (len(v['explanation']) - 1)
-                    
-            datasets = []
-            for i in tqdm(range(len(data)), desc= "VQA-X data preprocessing..."):
-                quention_id = ids_list[i]
-                sample = data[quention_id]
-                img_name = sample['image_name']
 
-                text_q = utils.proc_ques(sample['question'])    # question
-                text_a = utils.proc_ans(sample['answers'])
-                exp_idx = index_tracker[quention_id]
-                text_e = sample['explanation'][exp_idx]
+        # Load dataset
+        train_anno = json.load(open(hparams.train_anno_path, "r"))
+        random.shuffle(train_anno)
+        train_anno = train_anno[:self.fewshot_num]
+        self.dataset["train"] = self.get_dataset(train_anno, is_train=True)
 
-                # 2개의 explanation 이라면
-                if exp_idx > 0:
-                    index_tracker[quention_id] -= 1    # decrease usage
-                    
-                q_segment_id, s_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<situation>', '<answer>', '<explanation>'])
+        valid_anno = json.load(open(hparams.valid_anno_path, "r"))
+        self.dataset["valid"] = self.get_dataset(valid_anno, is_train=False)
 
-                question_tokens = self.tokenizer.tokenize(text_q)
-                segment_ids = [q_segment_id] * len(question_tokens)
-
-                # situation
-                situation_tag = self.tokenizer.tokenize("situation:")
-
-                # answer
-                answer_tokens =  self.tokenizer.tokenize(text_a)
-                answer_tag = self.tokenizer.tokenize("answer:")
-                answer_len = len(answer_tokens)
-                answer_tokens
-
-                # explanation
-                explanation_tokens = self.tokenizer.tokenize(text_e)
-                explanation_tag = self.tokenizer.tokenize("explanation:")
-                exp_len = len(explanation_tokens)
-
-                # Task A -> Q, I, A -> E
-                if self.task_A:
-                    tokens = question_tokens + situation_tag + ["<situation>"]*256 + answer_tag + answer_tokens + [self.tokenizer.eos_token]
-                    segment_ids = segment_ids + [s_segment_id]*256 + [e_segment_id] * (len(answer_tokens) +2)
-                    labels = explanation_tokens + [self.tokenizer.eos_token]
-
-                # Task B -> Q, E -> A
-                else:
-                    tokens = question_tokens + explanation_tag + explanation_tokens + [self.tokenizer.eos_token]
-                    segment_ids = segment_ids + [e_segment_id] * (len(tokens) - len(segment_ids))
-                    labels = answer_tokens + [self.tokenizer.eos_token]
-                    
-                # Split over sequence length
-                if len(tokens) > self.input_max_seq_length :
-                    tokens = tokens[:self.input_max_seq_length]
-                    segment_ids = segment_ids[:self.input_max_seq_length]
-                    
-                # Padding
-                attention_mask = torch.zeros(self.input_max_seq_length)
-                seq_len = len(tokens)
-                attention_mask[:seq_len] = torch.tensor([1])
-                input_padding_len = self.input_max_seq_length - len(tokens)
-                output_padding_len = self.output_max_seq_length - len(labels)
-                tokens = tokens + ([self.tokenizer.pad_token] * input_padding_len)
-                labels = labels + ([self.tokenizer.pad_token] * output_padding_len)
-                segment_ids += ([e_segment_id] * input_padding_len)
-                # token to ids
-
-                input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-                input_ids = torch.tensor(input_ids, dtype=torch.long)
-
-                labels = [self.tokenizer.convert_tokens_to_ids(t) for t in labels]
-                labels = torch.tensor(labels, dtype=torch.long)
-
-                segment_ids = torch.tensor(segment_ids, dtype=torch.long)
-
-
-                ## Image
-
-                folder = self.coco_data_dir + '/train2014/' if 'train' in img_name else self.coco_data_dir + 'val2014/'
-                img_path = folder + img_name
-                img = Image.open(img_path).convert('RGB')
-                img = self.img_transform(img)
-                qid =quention_id
-                qid = torch.LongTensor([int(quention_id)])
-
-                datasets.append({"img": img, "qid" : qid, "input_ids": input_ids, "labels": labels, "segment_ids" : segment_ids, "attention_mask" : attention_mask})
-            torch.save({"datasets": datasets}, cached_features_file)
-
-        return datasets
-        
     def train_dataloader(self):
-        return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.train_batch_size, pin_memory=True, num_workers=0)
+        return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.cfg.train_batch_size, pin_memory=True, num_workers=self.cfg.n_train_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset["validation"], batch_size=self.train_batch_size, pin_memory=True, num_workers=0)
-    
-    #def test_dataloader(self):
-    #    return DataLoader(self.dataset["test"], batch_size=self.train_batch_size, pin_memory=True, num_workers=4)
+        return DataLoader(self.dataset["valid"], batch_size=self.cfg.train_batch_size, pin_memory=True, num_workers=self.cfg.n_valid_workers)
+
+    def get_dataset(self, anno, is_train=False):
+        raise NotImplementedError
+
+
+class VQAXDataModule(BaseDataModule):
+    def get_dataset(self, anno, is_train = False):
+        cached_filename = f"vqax_shot-{self.fewshot_num}_seed-{self.cfg.seed}.cache"
+        
+        # Caching
+        if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)):
+            logger.info("Loading features from cached file %s", cached_filename)
+            features_and_dataset = torch.load(cached_features_file)
+            datasets = features_and_dataset["datasets"]
+        else:
+            ids_list = list(anno.keys())
+            index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
+            for k,v in tqdm(anno.items(), desc= "Processing VQA-X annotation"):   
+                if len(v['explanation']) > 1:   # some questions have more than one explanation 
+                    ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+
+            # Set image directory
+            if is_train:
+                img_dir = self.img_data_dir + "/train2014/"
+            else:
+                img_dir = self.img_data_dir + "/val2014/"
+                    
+            datasets = []
+            for i in tqdm(range(len(anno)), desc= "Processing VQA-X data"):
+                question_id = ids_list[i]
+                sample = data[question_id]
+                img_name = sample['image_name']
+
+                question_txt = utils.proc_ques(sample['question'])    # question
+                answer_txt = utils.proc_ans(sample['answers'])
+                exp_idx = index_tracker[question_id]
+                explain_txt = sample['explanation'][exp_idx]
+
+                # if one more explanations
+                if exp_idx > 0:
+                    index_tracker[question_id] -= 1    # decrease usage
+                    
+                # Question                
+                question_input = self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(question_txt))
+
+                # Answer
+                answer_input =  self.tokenizer.tokenize("answer: " + answer_txt)
+                answer_input = tokenzier.convert_tokens_to_ids(answer_input)
+                
+                # scene
+                # scene_tag = self.tokenizer.tokenize("scene:")
+
+                # explanation
+                explain_input = self.tokenizer.tokenize("reason: " + explain_txt)
+                explain_input = self.tokenzier.convert_tokens_to_ids(explain_input)
+
+                ## Image
+                img_path = img_dir + img_name
+                img = self.img_transform(Image.open(img_path))
+
+                # Tensorize and add data
+                datasets.append({
+                    "Q": torch.tensor(question_input, dtype=torch.long),
+                    "E": torch.tensor(explain_input, dtype=torch.long),
+                    "A": torch.tensor(answer_input, dtype=torch.long),
+                    "I": img, 
+                })
+            
+            if not os.path.exists(self.cfg.cached_dir):
+                os.mkdir(self.cfg.cached_dir)
+            
+            # save cached file
+            torch.save(datasets, os.path.join(self.cfg.cached_dir, cached_filename))
+
+        return datasets
