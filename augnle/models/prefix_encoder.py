@@ -5,14 +5,14 @@ class PrefixEncoder(torch.nn.Module):
     r'''
     The torch.nn model to encode the prefix
     Input shape: (batch-size, prefix-length)
-    Output shape: (batch-size, prefix-length, 2*layers*hidden)
+    Output shape: (batch-size, prefix-length, hidden)
     '''
     def __init__(self, config):
         super().__init__()
         self.prefix_projection = config.prefix_projection
         if self.prefix_projection:
             # Use a two-layer MLP to encode the prefix
-            self.embedding = torch.nn.Embedding(config.prefix_seq_len, config.hidden_size)
+            self.embedding = torch.nn.Embedding(config.prefix_len*2, config.hidden_size) # two tasks
             self.trans = torch.nn.Sequential(
                 torch.nn.Linear(config.hidden_size, config.prefix_hidden_size),
                 torch.nn.Tanh(),

@@ -11,137 +11,109 @@ from transformers import (
 )
 from models.seq2seq import T5PrefixForConditionalGeneration
 from models.ViT import ImageEncoder
+from transformers import SwinModel
+
 
 class PromptTuning(LightningModule):
-    def __init__(
-        self,
-        hparams,
-        **kwargs,
-    ):
+    def __init__(self, hparams, **kwargs):
         super().__init__()
         # Save Hyper parameters
         self.save_hyperparameters(hparams)
-        # version difference
-        #self.hparams.update(hparams)
-        self.task_name = "task_A" if self.hparams.task_A else "task_B"
-        self.learning_rate= self.hparams.learning_rate
-        self.adam_epsilon= self.hparams.adam_epsilon
-        self.warmup_steps= self.hparams.warmup_steps
-        self.weight_decay= self.hparams.weight_decay
-        self.train_batch_size= self.hparams.train_batch_size
-        self.eval_batch_size= self.hparams.eval_batch_size
-        self.ckpt_path = self.hparams.ckpt_path
-        self.img_size = self.hparams.img_size
-        self.max_seq_length = self.hparams.input_max_seq_length
+        self.cfg = hparams
+        self.learning_rate= self.cfg.learning_rate
+        self.adam_epsilon=  self.cfg.adam_epsilon
+        self.warmup_steps=  self.cfg.warmup_steps
+        self.weight_decay=  self.cfg.weight_decay
+        self.img_size = self.cfg.img_size
+        self.max_seq_length = self.hparams.enc_max_len
         
 
         #Configuration
-        self.config = T5Config.from_pretrained('t5-large')
-        setattr(self.config, 'img_size', None)
-        setattr(self.config, 'task_name', self.task_name)
-        setattr(self.config, 'max_seq_length', None)
-        setattr(self.config, 'hidden_dropout_prob', 0.1)
-        setattr(self.config, 'prefix_projection', True)
-        setattr(self.config, 'prefix_hidden_size', 40)
-        setattr(self.config, 'prefix_seq_len', 20)
+        self.config = T5Config.from_pretrained(hparams.lm_backbone)
+        setattr(self.config, 'img_size', hparams.img_size)
+        setattr(self.config, 'max_seq_length', hparams.enc_max_len)
+        setattr(self.config, 'prefix_dropout', hparams.prefix_dropout)
+        setattr(self.config, 'prefix_projection', not hparams.no_prompt_proj)
+        setattr(self.config, 'prefix_hidden_size', hparams.prefix_hidden_size)
+        setattr(self.config, 'prefix_len', hparams.prefix_len)
         
-        self.tokenizer = T5Tokenizer.from_pretrained('t5-large')
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
+        self.tokenizer = T5Tokenizer.from_pretrained(hparams.lm_backbone)
+        # num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<situation>', '<answer>']})
         
-        self.config.img_size = self.img_size
-        self.config.max_seq_length = self.max_seq_length 
-        self.config.add_cross_attention = True
-        self.model = T5PrefixForConditionalGeneration.from_pretrained('t5-large',config = self.config, tokenizer = self.tokenizer)
+        # self.config.add_cross_attention = True
+        self.model = T5PrefixForConditionalGeneration.from_pretrained(hparams.lm_backbone, config=self.config, tokenizer=self.tokenizer)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
-        self.image_encoder = ImageEncoder(self.device)
-        
-        self.mlp_vit = nn.Sequential(
-            nn.Linear(self.image_encoder.encoder.visual.conv1.out_channels, self.config.d_model),
+        # self.image_encoder = ImageEncoder(self.device)
+        self.image_encoder = SwinModel.from_pretrained(hparams.visual_backbone)
+        self.visual_proj = nn.Sequential(
+            nn.Linear(self.image_encoder.num_features, self.image_encoder.num_features),
             nn.GELU(),
-            nn.Linear(self.config.d_model, self.config.d_model)
+            nn.Linear(self.image_encoder.num_features, self.config.d_model)
         )
-        
+
         # Freezing
         if self.hparams.finetuning:
             self.change_requires_grad(self.model.prefix_encoder, False)
     
         self.change_requires_grad(self.image_encoder, False)
         
-
-        
     def change_requires_grad(self, model, req_grad):
         for p in model.parameters():
             p.requires_grad = req_grad
-    
-    def forward(self, **inputs):
-        return self.model(**inputs)
 
-    def training_step(self,  batch, batch_idx):
-        
-        if self.task_name == "task_A":
-            p_id, img, _, input_ids, labels, _, attention_mask = batch.values()
-            img_embeddings = self.image_encoder(img)
-            img_embeddings = self.mlp_vit(img_embeddings)
-        
-            outputs = self(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                decoder_attention_mask=None,
-                inputs_embeds=img_embeddings,
-                labels=labels,
-                )
-        # Task B
-        else:
-            p_id, _, _, input_ids, labels, _, attention_mask = batch.values()
-            outputs = self(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                decoder_attention_mask=None,
-                inputs_embeds=None,
-                labels=labels,
-                )
-        loss = outputs.loss
-        
-        
-        self.log("train_loss", loss)
-
-        return loss
     def setup(self,stage):
-        train_loader = self.trainer.datamodule.train_dataloader()
+        train_iter = len(self.trainer.datamodule.train_dataloader())
         
         # Setting
         tb_size = self.hparams.train_batch_size  * self.trainer.accumulate_grad_batches * max(1, self.trainer.gpus)
-        self.total_steps = (len(train_loader.dataset) // tb_size) * self.trainer.max_epochs
-        self.warmup_steps = int(len(train_loader.dataset) / self.trainer.gpus * self.trainer.max_epochs * 0.2)
+        self.total_steps = (train_iter // tb_size) * self.trainer.max_epochs
+        self.warmup_steps = int(train_iter / self.trainer.gpus * self.trainer.max_epochs * 0.2)
+    
 
-    def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        if self.task_name == "task_A":
-            p_id, img, _, input_ids, labels, _, attention_mask = batch.values()
-            img_embeddings = self.image_encoder(img)
-            img_embeddings = self.mlp_vit(img_embeddings)
-        
-            outputs = self(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                decoder_attention_mask=None,
-                inputs_embeds=img_embeddings,
-                labels=labels,
-                )
-        # Task A
-        else:
-            p_id, _, _, input_ids, labels, _, attention_mask = batch.values()
-            outputs = self(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                decoder_attention_mask=None,
-                inputs_embeds=None,
-                labels=labels,
-                
-                )
+    def forward(self, **inputs):
+        return self.model(**inputs)
+
+
+    def training_step(self, batch, batch_idx):
+        visual_embeddings = self.image_encoder(pixel_values=batch["img"]).last_hidden_state
+        visual_embeddings = self.visual_proj(visual_embeddings)
+
+        t_e_inputs = self.model.shared(batch["t_e_inputs"])
+        t_e_inputs = torch.cat((visual_embeddings, t_e_inputs), dim=1)
+        t_a_inputs = self.model.shared(batch["t_a_inputs"])
+
+        enc_inputs = torch.cat((t_e_inputs, t_a_inputs), dim=0)
+        attn_mask = torch.cat((batch["t_e_attn_mask"], batch["t_a_attn_mask"]), dim=0)
+        labels = torch.cat((batch["t_e_label"], batch["t_a_label"]), dim=0)
+
+        outputs = self.model(inputs_embeds=enc_inputs, attention_mask=attn_mask, labels=labels)
+
+        loss = outputs.loss
+
+        self.log("train_loss", loss)
+
+        return loss
+
+
+    def validation_step(self, batch, batch_idx):
+        visual_embeddings = self.image_encoder(pixel_values=batch["img"]).last_hidden_state
+        visual_embeddings = self.visual_proj(visual_embeddings)
+
+        t_e_inputs = self.model.shared(batch["t_e_inputs"])
+        t_e_inputs = torch.cat((visual_embeddings, t_e_inputs), dim=1)
+        t_a_inputs = self.model.shared(batch["t_a_inputs"])
+
+        enc_inputs = torch.cat((t_e_inputs, t_a_inputs), dim=0)
+        attn_mask = torch.cat((batch["t_e_attn_mask"], batch["t_a_attn_mask"]), dim=0)
+        labels = torch.cat((batch["t_e_label"], batch["t_a_label"]), dim=0)
+
+        outputs = self.model(inputs_embeds=enc_inputs, attention_mask=attn_mask, labels=labels)
+
         loss = outputs.loss
         self.log("val_loss", loss)
-        return outputs[0]
+
+        return loss
 
 
     def configure_optimizers(self):
@@ -168,14 +140,3 @@ class PromptTuning(LightningModule):
         )
         scheduler = {"scheduler": scheduler, "interval": "step"}
         return [optimizer], [scheduler]
-
-'''
-    
-    def pred_file(self,prefix=''):
-        self.output_prediction_file = os.path.join(self.hparams.output_dir, "predictions_{}.json".format(prefix))
-        self.output_nbest_file = os.path.join(self.hparams.output_dir, "nbest_predictions_{}.json".format(prefix))
-        if self.hparams.version_2_with_negative:
-            self.output_null_log_odds_file = os.path.join(self.hparams.output_dir, "null_odds_{}.json".format(prefix))
-        else:
-            self.output_null_log_odds_file = None
-            '''
