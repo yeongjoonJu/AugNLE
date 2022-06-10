@@ -24,32 +24,39 @@ def get_args():
     
     """Data related arguments"""
     data_args = parser.add_argument_group('Data related arguments')
-    data_args.add_argument('--input_max_seq_length', type=int, default= 128, help='Max sequence legnth')
-    data_args.add_argument('--output_max_seq_length', type=int, default= 128, help='Max sequence legnth')
-    data_args.add_argument('--nle_data_dir', type=str, default= '.', help='Directory to NLE load dataset')
-    data_args.add_argument('--annotation_data_dir', type=str, default= '.', help='Directory to annotation load dataset')   
-    data_args.add_argument('--coco_data_dir', type=str, default= '.', help='Directory to coco dataset') 
-    data_args.add_argument('--img_size', type=int, default= 0, help='Image size')
-    data_args.add_argument('--tokenizer_name', type=str, default= None, help='Pretrained Tokenizer name')
-    data_args.add_argument('--filename', type=str, default= None, help='Optimizer file name')
-    data_args.add_argument('--task_A', action="store_true", help='Doing task A')
-    data_args.add_argument("--fewshot", type=float, default=None, help="few shot percentage")
+    data_args.add_argument('--enc_max_len', type=int, default=256, help='Max sequence legnth')
+    data_args.add_argument('--dec_max_len', type=int, default=128, help='Max sequence legnth')
+    data_args.add_argument('--train_anno_path', type=str, default=None, help='Path to annotation for training')
+    data_args.add_argument('--valid_anno_path', type=str, default=None, help='Path to annotation for validation')
+    data_args.add_argument('--image_dir', type=str, default=None, help='Directory to image dataset') 
+    data_args.add_argument('--img_size', type=int, default=224, help='Image size')        
+    data_args.add_argument("--fewshot_ratio", type=float, default=-1, help="Ratio of few-shot data")
+    data_args.add_argument("--fewshot_num", type=int, default=500, help="The number of few-shot data")
+    data_args.add_argument("--cached_dir", type=str, default="cached", help="Directory with cached file")
+    data_args.add_argument("--vis_rep_len", type=int, default=14*14, help="visual representation length")
+    data_args.add_argument("--n_train_workers", type=int, default=8)
+    data_args.add_argument("--n_valid_workers", type=int, default=4)
+
     
     """Model related arguments"""
     model_args = parser.add_argument_group('Model related arguments')
+    model_args.add_argument("--lm_backbone", type=str, default="t5-large", help="Pretrained language model")
+    model_args.add_argument("--visual_backbone", type=str, default="microsoft/swin-base-patch4-window7-224-in22k")
     model_args.add_argument('--max_epochs', type=int, default=10, help='Max epoch size')
-    model_args.add_argument('--output_dir', type=str, default=".", help='Max epoch size')    
     model_args.add_argument('--load_from_epoch', type=str, default=None, help='Loading from epoch')
-    model_args.add_argument("--prompting", action="store_true")
     model_args.add_argument("--finetuning", action="store_true")
+    model_args.add_argument("--no_prompt_proj", action="store_true", help="Do not project prefix")
+    model_args.add_argument("--prefix_hidden_size", type=int, default=768)
+    model_args.add_argument("--prefix_len", type=int, default=50)
+    model_args.add_argument("--prefix_dropout", type=float, default=0.1)
+
 
     """Logging related arguments"""
     misc_args = parser.add_argument_group('Logging related & Misc arguments')
     misc_args.add_argument('--seed', type=int, default=42, help='Random Seed')
     misc_args.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name for wandb')
     misc_args.add_argument('--ngpu', type=int, default=-1, help='Number of gpu')
-    misc_args.add_argument('--ckpt_path', type=str, default="/media/storage/checkpoints", help='Checkpoint directory')
-    misc_args.add_argument('--checkpoints_dir', type=str, default=None, help='Checkpoint file directory')
+    misc_args.add_argument('--ckpt_dir', type=str, default="./ckpts", help='Checkpoint directory')
 
 
 
