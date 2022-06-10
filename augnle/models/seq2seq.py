@@ -60,16 +60,6 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)
         attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
         
-<<<<<<< HEAD
-        # Fill scene embedding
-        if self.task_name == "task_A":
-            sit_idx = self.get_scene_idx(input_ids)
-            for idx,location in enumerate(sit_idx):
-                ids_embeds[idx][location:location+196, :] = inputs_embeds[idx]
-    
-        ids_embeds = torch.cat((prompt_enc,ids_embeds),dim = 1)
-=======
->>>>>>> main
         if encoder_outputs is None:
             encoder_outputs = self.encoder(input_ids=None,
                                            attention_mask=attention_mask,
