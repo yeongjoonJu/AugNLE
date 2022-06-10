@@ -14,6 +14,7 @@ from transformers import (
 )
 from models.seq2seq import T5PrefixForConditionalGeneration
 from models.ViT import ImageEncoder
+from transformers import SwinModel
 
 
 class PromptTuning(LightningModule):
@@ -46,12 +47,12 @@ class PromptTuning(LightningModule):
         self.model = T5PrefixForConditionalGeneration.from_pretrained(hparams.lm_backbone, config=self.config, tokenizer=self.tokenizer)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
-        self.image_encoder = ImageEncoder(self.device)
-        
+        # self.image_encoder = ImageEncoder(self.device)
+        self.image_encoder = SwinModel.from_pretrained(hparams.visual_backbone)
         self.visual_proj = nn.Sequential(
-            nn.Linear(self.image_encoder.encoder.visual.conv1.out_channels, self.config.d_model),
+            nn.Linear(self.image_encoder.num_features, self.image_encoder.num_features),
             nn.GELU(),
-            nn.Linear(self.config.d_model, self.config.d_model)
+            nn.Linear(self.image_encoder.num_features, self.config.d_model)
         )
 
         # Freezing
@@ -78,7 +79,7 @@ class PromptTuning(LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-        visual_embeddings = self.image_encoder(batch["img"])
+        visual_embeddings = self.image_encoder(pixel_values=batch["img"]).last_hidden_state
         visual_embeddings = self.visual_proj(visual_embeddings)
 
         t_e_inputs = self.model.shared(batch["t_e_inputs"])
@@ -99,7 +100,7 @@ class PromptTuning(LightningModule):
 
 
     def validation_step(self, batch, batch_idx):
-        visual_embeddings = self.image_encoder(batch["img"])
+        visual_embeddings = self.image_encoder(pixel_values=batch["img"]).last_hidden_state
         visual_embeddings = self.visual_proj(visual_embeddings)
 
         t_e_inputs = self.model.shared(batch["t_e_inputs"])

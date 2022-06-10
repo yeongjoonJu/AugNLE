@@ -33,7 +33,7 @@ def get_args():
     data_args.add_argument("--fewshot_ratio", type=float, default=-1, help="Ratio of few-shot data")
     data_args.add_argument("--fewshot_num", type=int, default=500, help="The number of few-shot data")
     data_args.add_argument("--cached_dir", type=str, default="cached", help="Directory with cached file")
-    data_args.add_argument("--vis_rep_len", type=int, default=14*14, help="visual representation length")
+    data_args.add_argument("--vis_rep_len", type=int, default=7*7, help="visual representation length")
     data_args.add_argument("--n_train_workers", type=int, default=8)
     data_args.add_argument("--n_valid_workers", type=int, default=4)
 
@@ -47,7 +47,7 @@ def get_args():
     model_args.add_argument("--finetuning", action="store_true")
     model_args.add_argument("--no_prompt_proj", action="store_true", help="Do not project prefix")
     model_args.add_argument("--prefix_hidden_size", type=int, default=768)
-    model_args.add_argument("--prefix_len", type=int, default=50)
+    model_args.add_argument("--prefix_len", type=int, default=80)
     model_args.add_argument("--prefix_dropout", type=float, default=0.1)
 
 
@@ -55,7 +55,7 @@ def get_args():
     misc_args = parser.add_argument_group('Logging related & Misc arguments')
     misc_args.add_argument('--seed', type=int, default=42, help='Random Seed')
     misc_args.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name for wandb')
-    misc_args.add_argument('--ngpu', type=int, default=-1, help='Number of gpu')
+    misc_args.add_argument('--ngpu', type=int, default=1, help='Number of gpu')
     misc_args.add_argument('--ckpt_dir', type=str, default="./ckpts", help='Checkpoint directory')
 
 

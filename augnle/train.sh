@@ -17,4 +17,6 @@ CUDA_VISIBLE_DEVICES=0 python Trainer.py \
 --train_batch_size 8 \
 --learning_rate 2e-5 \
 --gradient_accumulation_steps 1 \
---fewshot_ratio 0.05
+--fewshot_ratio 0.1 \
+--prefix_len 50 \
+--val_check_interval 1.0

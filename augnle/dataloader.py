@@ -31,9 +31,10 @@ class BaseDataModule(LightningDataModule):
         self.save_hyperparameters(hparams)
         self.cfg = hparams
 
-        self.img_transform = transforms.Compose([transforms.Resize((hparams.img_size, hparams.img_size)),
-                                                 transforms.ToTensor(),
-                                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        # self.img_transform = transforms.Compose([transforms.Resize((hparams.img_size, hparams.img_size)),
+        #                                          transforms.ToTensor(),
+        #                                          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
         self.tokenizer = T5Tokenizer.from_pretrained(self.cfg.lm_backbone)
         # n_add_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
 
@@ -102,7 +103,7 @@ class BaseDataModule(LightningDataModule):
             sample["t_a_inputs"] = t_a_inputs
             sample["t_a_attn_mask"] = t_a_attn_mask
             sample["t_a_label"] = t_a_label
-            sample["img"] = torch.stack(batch[4])
+            sample["img"] = torch.cat(batch[4])
 
             return sample
 
@@ -170,7 +171,7 @@ class VQAXDataModule(BaseDataModule):
                 t_a_label = f"the answer is {answer_txt}"
                 # Image
                 img_path = img_dir + img_name
-                img = self.img_transform(Image.open(img_path).convert("RGB"))
+                img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
 
                 # tokenize and encode
                 t_e_input = self.tokenizer(t_e_input).input_ids

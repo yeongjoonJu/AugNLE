@@ -15,7 +15,7 @@ if __name__ == '__main__':
   args = opts.get_args()
   args.filename = 'ckpt_stats_' + str(args.load_from_epoch) + '.tar'
   seed_everything(args.seed)
-  
+
   wandb_logger = WandbLogger(project="Aug_NLX", name =args.experiment_name)
   dm = VQAXDataModule(args)
   dm.setup()
@@ -25,8 +25,8 @@ if __name__ == '__main__':
   # Checkpoint call back
   
   now = datetime.datetime.now()
-  nowDatetime = now.strftime('%Y-%m-%d_%H:%M:%S')
-  ckpt_dir = args.ckpt_dir + nowDatetime + "/"
+  nowDatetime = now.strftime('%Y-%m-%d_%H:%M')
+  ckpt_dir = args.ckpt_dir + '/' + nowDatetime + "/"
   if not os.path.isdir(ckpt_dir):
     os.mkdir(ckpt_dir)
     
