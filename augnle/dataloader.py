@@ -128,7 +128,10 @@ class VQAXDataModule(BaseDataModule):
     # T_a  >> question: [Q] reason: [E] -> the answer is [A]
 
     def get_dataset(self, anno, is_train = False):
-        cached_filename = f"vqax_shot-{self.fewshot_num}_seed-{self.cfg.seed}.cache"
+        if is_train:
+            cached_filename = f"vqax_shot-{self.fewshot_num}_train_seed-{self.cfg.seed}.cache"
+        else:
+            cached_filename = f"vqax_shot-{self.fewshot_num}_valid_seed-{self.cfg.seed}.cache"
         
         # Caching
         if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)):
