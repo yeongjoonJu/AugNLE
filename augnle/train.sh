@@ -4,7 +4,7 @@ CKPT_DIR="./ckpts"
 
 CUDA_VISIBLE_DEVICES=0 python Trainer.py \
 --experiment_name $(date +%D-%T) \
---max_epochs 30 \
+--max_epochs 10 \
 --ngpu 1 \
 --warmup_steps 100 \
 --ckpt_dir ${CKPT_DIR} \

@@ -22,6 +22,16 @@ class MatchingScorer(object):
             ref = [ref]
         scores = self.evaluator.compute_individual_metrics(hyp=hyp, ref=ref)
         return scores[self.metric]
+
+
+def get_similarity(self, image_features, text_features, logit_scale):
+    # normalized features
+    image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+    text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+
+    # cosine similarity as logits
+    logit_scale = 
+
     
 
 if __name__=="__main__":
