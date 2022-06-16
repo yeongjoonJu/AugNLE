@@ -60,11 +60,9 @@ class BaseDataModule(LightningDataModule):
             def collate_wrapper(batch):
                 batch = list(zip(*batch))
                 sample = {}
-                vis_rep_len = self.cfg.vis_rep_len
 
                 # enc max len
                 t_e_max_len = max([x.size(0) for x in batch[0]])
-                t_e_max_len += vis_rep_len
                 t_a_max_len = max([x.size(0) for x in batch[2]])
                 enc_max_len = t_e_max_len if t_e_max_len > t_a_max_len else t_a_max_len
 
@@ -74,11 +72,11 @@ class BaseDataModule(LightningDataModule):
                 dec_max_len = ex_max_len if ex_max_len > an_max_len else an_max_len 
                 
                 # t_e_input
-                t_e_inputs = torch.zeros((len(batch[0]), enc_max_len-vis_rep_len), dtype=torch.long)
+                t_e_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
                 t_e_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
                 for i, x in enumerate(batch[0]):
                     t_e_inputs[i,:x.size(0)] = x
-                    t_e_attn_mask[i,:vis_rep_len+x.size(0)] = 1.0
+                    t_e_attn_mask[i,:x.size(0)] = 1.0
                 
                 # explanation (t_e_target)
                 t_e_label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
@@ -97,13 +95,9 @@ class BaseDataModule(LightningDataModule):
                 for i, x in enumerate(batch[3]):
                     t_a_label[i,:x.size(0)] = x
 
-                sample["t_e_inputs"] = t_e_inputs
-                sample["t_e_attn_mask"] = t_e_attn_mask
-                sample["t_e_label"] = t_e_label
-                sample["t_a_inputs"] = t_a_inputs
-                sample["t_a_attn_mask"] = t_a_attn_mask
-                sample["t_a_label"] = t_a_label
-                sample["img"] = torch.cat(batch[4])
+                sample["enc_inputs"] = torch.cat((t_e_inputs, t_a_inputs), dim=0)
+                sample["attn_mask"] = torch.cat((t_e_attn_mask, t_a_attn_mask), dim=0)
+                sample["labels"] = torch.cat((t_e_label, t_a_label), dim=0)
 
                 return sample
         else:
@@ -153,7 +147,7 @@ class BaseDataModule(LightningDataModule):
 
 class VQAXDataModule(BaseDataModule):
     # Main >> [I] question: [Q] -> the answer is [A] because [E]
-    # T_e  >> [I] question: [Q] answer: [A] -> because [E]
+    # T_e  >> because [E] -> question: [Q], the answer is [A]
     # T_a  >> question: [Q] reason: [E] -> the answer is [A]
     # mode: ["prompt_train", "prompt_valid", "adapt_train", "adapt_valid"]
 
@@ -200,9 +194,9 @@ class VQAXDataModule(BaseDataModule):
 
                 if is_prompt:
                     # composition of text
-                    # [I] question: [Q] answer: [A] -> because [E]
-                    t_e_input = f"question: {question_txt} answer: {answer_txt}"
-                    t_e_label = f"because {explain_txt}"
+                    # because [E] -> question: [Q], the answer is [A]
+                    t_e_input = f"because {explain_txt}"
+                    t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
                     # question: [Q] reason: [E] -> the answer is [A]
                     t_a_input = f"question: {question_txt} reason: {explain_txt}"
                     t_a_label = f"the answer is {answer_txt}"
@@ -220,7 +214,7 @@ class VQAXDataModule(BaseDataModule):
                     t_a_label = torch.tensor(t_a_label, dtype=torch.long)
 
                     # add data
-                    datasets.append((t_e_input, t_e_label, t_a_input, t_a_label, img))
+                    datasets.append((t_e_input, t_e_label, t_a_input, t_a_label))
                 else:
                     # composition of text
                     # answer and explain: [I] question: [Q] -> the answer is [A] because [E]

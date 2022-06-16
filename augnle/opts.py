@@ -41,14 +41,14 @@ def get_args():
     
     """Model related arguments"""
     model_args = parser.add_argument_group('Model related arguments')
-    model_args.add_argument("--lm_backbone", type=str, default="t5-large", help="Pretrained language model")
+    model_args.add_argument("--lm_backbone", type=str, default="google/t5-large-lm-adapt", help="Pretrained language model")
     model_args.add_argument("--visual_backbone", type=str, default="microsoft/swin-base-patch4-window7-224-in22k")
     model_args.add_argument('--max_epochs', type=int, default=10, help='Max epoch size')
     model_args.add_argument('--load_from_epoch', type=str, default=None, help='Loading from epoch')
     model_args.add_argument("--finetuning", action="store_true")
     model_args.add_argument("--no_prompt_proj", action="store_true", help="Do not project prefix")
     model_args.add_argument("--prefix_hidden_size", type=int, default=768)
-    model_args.add_argument("--prefix_len", type=int, default=80)
+    model_args.add_argument("--prefix_len", type=int, default=100)
     model_args.add_argument("--prefix_dropout", type=float, default=0.1)
 
 

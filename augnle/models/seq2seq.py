@@ -62,9 +62,10 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         return_dict = return_dict if return_dict is not None else self.config.return_dict
         
         if prompting:
-            batch_size = inputs_embeds.shape[0]
+            batch_size = input_ids.shape[0]
             prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
             prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)
+            inputs_embeds = self.shared(input_ids)
             inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)
             attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
         

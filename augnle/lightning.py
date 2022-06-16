@@ -53,17 +53,7 @@ class PromptTuning(LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-        visual_embeddings = self.image_encoder(pixel_values=batch["img"])
-
-        t_e_inputs = self.model.shared(batch["t_e_inputs"])
-        t_e_inputs = torch.cat((visual_embeddings, t_e_inputs), dim=1)
-        t_a_inputs = self.model.shared(batch["t_a_inputs"])
-
-        enc_inputs = torch.cat((t_e_inputs, t_a_inputs), dim=0)
-        attn_mask = torch.cat((batch["t_e_attn_mask"], batch["t_a_attn_mask"]), dim=0)
-        labels = torch.cat((batch["t_e_label"], batch["t_a_label"]), dim=0)
-
-        outputs = self.model(inputs_embeds=enc_inputs, attention_mask=attn_mask, labels=labels)
+        outputs = self.model(input_ids=batch["enc_inputs"], attention_mask=batch["attn_mask"], labels=batch["labels"])
 
         loss = outputs.loss
 
@@ -72,17 +62,9 @@ class PromptTuning(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        visual_embeddings = self.image_encoder(pixel_values=batch["img"])
+        outputs = self.model(input_ids=batch["enc_inputs"], attention_mask=batch["attn_mask"], labels=batch["labels"])
 
-        t_e_inputs = self.model.shared(batch["t_e_inputs"])
-        t_e_inputs = torch.cat((visual_embeddings, t_e_inputs), dim=1)
-        t_a_inputs = self.model.shared(batch["t_a_inputs"])
-
-        enc_inputs = torch.cat((t_e_inputs, t_a_inputs), dim=0)
-        attn_mask = torch.cat((batch["t_e_attn_mask"], batch["t_a_attn_mask"]), dim=0)
-        labels = torch.cat((batch["t_e_label"], batch["t_a_label"]), dim=0)
-
-        outputs = self.model(inputs_embeds=enc_inputs, attention_mask=attn_mask, labels=labels)
+        loss = outputs.loss
 
         loss = outputs.loss
         self.log("val_loss", loss)

@@ -114,11 +114,11 @@ if __name__ == '__main__':
     image_encoder = SwinImageEncoder(args.visual_backbone, config.d_model)
 
     # Adaptation
-    backbone, image_encoder = adaptation(backbone, image_encoder, tokenizer, args)
+    # backbone, image_encoder = adaptation(backbone, image_encoder, tokenizer, args)
 
-    backbone.cpu()
-    image_encoder.cpu()
-    torch.cuda.empty_cache()
+    # backbone.cpu()
+    # image_encoder.cpu()
+    # torch.cuda.empty_cache()
 
     # Multi-task prompt tuning
     multi_task_prompt_tuning(backbone, image_encoder, args)
