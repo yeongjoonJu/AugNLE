@@ -3,7 +3,7 @@ from tqdm import tqdm
 from PIL import Image
 
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 from pytorch_lightning import LightningDataModule
@@ -14,15 +14,23 @@ import utils
 import logging
 logger = logging.getLogger(__name__)
 
-def random_data_choice(anno, num):
+def random_data_choice(anno, num, pseudo=False):
     fewshot_data = {}
+    # For pseudo labeling
+    pseudo_data = {}
+    
     img_ids = list(anno.keys())
     random.shuffle(img_ids)
-    img_ids = img_ids[:num]
-    for img_id in img_ids:
-        fewshot_data[img_id] = anno[img_id]
+    f_img_ids = img_ids[:num]
+    p_img_ids = img_ids[num:]
     
-    return fewshot_data
+    for img_id in f_img_ids:
+        fewshot_data[img_id] = anno[img_id]
+    if pseudo:
+        for img_id in p_img_ids:
+            pseudo_data[img_id] = anno[img_id]
+    
+    return fewshot_data, pseudo_data
 
 
 class BaseDataModule(LightningDataModule):
@@ -49,11 +57,13 @@ class BaseDataModule(LightningDataModule):
         else:
             self.fewshot_num = hparams.fewshot_num
 
-        train_anno = random_data_choice(train_anno, self.fewshot_num)
-        self.dataset["train"] = self.get_dataset(train_anno, is_train=True)
+        train_anno, pseudo_ann = random_data_choice(train_anno, self.fewshot_num, pseudo=self.cfg.pseudo_data)
+        self.dataset["train"] = self.get_dataset(train_anno, mode="train")
 
         valid_anno = json.load(open(hparams.valid_anno_path, "r"))
-        self.dataset["valid"] = self.get_dataset(valid_anno, is_train=False)
+        self.dataset["valid"] = self.get_dataset(valid_anno, mode="val")
+        if self.cfg.pseudo_data:
+            self.dataset["pseudo"] = self.get_dataset(pseudo_ann, mode="pseudo")
 
         vis_rep_len = hparams.vis_rep_len
 
@@ -106,8 +116,55 @@ class BaseDataModule(LightningDataModule):
             sample["img"] = torch.cat(batch[4])
 
             return sample
+        
+        def collate_wrapper_pseudo(batch):
+            batch = list(zip(*batch))
+            sample = {}
+
+            # enc max len
+            t_e_max_len = max([x.size(0) for x in batch[0]])
+            t_e_max_len += vis_rep_len
+            t_a_max_len = max([x.size(0) for x in batch[2]])
+            enc_max_len = t_e_max_len if t_e_max_len > t_a_max_len else t_a_max_len
+
+            # dec max len
+            ex_max_len = max([x.size(0) for x in batch[1]])
+            an_max_len = max([x.size(0) for x in batch[3]])
+            dec_max_len = ex_max_len if ex_max_len > an_max_len else an_max_len 
+            
+            # t_e_input
+            t_e_inputs = torch.zeros((len(batch[0]), enc_max_len-vis_rep_len), dtype=torch.long)
+            t_e_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[0]):
+                t_e_inputs[i,:x.size(0)] = x
+                t_e_attn_mask[i,:vis_rep_len+x.size(0)] = 1.0
+            
+            # explanation (t_e_target)
+            t_e_label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[1]):
+                t_e_label[i,:x.size(0)] = x
+
+            # t_a_input
+            t_a_inputs = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
+            t_a_attn_mask = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[2]):
+                t_a_inputs[i,:x.size(0)] = x
+                t_a_attn_mask[i,:x.size(0)] = 1.0
+            
+            # answer (t_a_target)
+            t_a_label = torch.zeros((len(batch[3]), dec_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[3]):
+                t_a_label[i,:x.size(0)] = x
+
+            sample["t_e_inputs"] = t_e_inputs
+            sample["t_e_attn_mask"] = t_e_attn_mask
+            sample["img"] = torch.cat(batch[4])
+
+            return sample
 
         self.collate_fn = collate_wrapper
+        
+        self.collate_fn2 = collate_wrapper_pseudo
 
 
     def train_dataloader(self):
@@ -117,6 +174,10 @@ class BaseDataModule(LightningDataModule):
     def val_dataloader(self):
         return DataLoader(self.dataset["valid"], shuffle=False, batch_size=self.cfg.train_batch_size, \
                         pin_memory=True, num_workers=self.cfg.n_valid_workers, collate_fn=self.collate_fn)
+        
+    def predict_dataloader(self):
+            return DataLoader(self.dataset["pseudo"], shuffle=False, batch_size= 1, \
+                            pin_memory=True, num_workers=self.cfg.n_valid_workers, collate_fn=self.collate_fn2)
 
     def get_dataset(self, anno, is_train=False):
         raise NotImplementedError
@@ -127,8 +188,8 @@ class VQAXDataModule(BaseDataModule):
     # T_e  >> [I] question: [Q] answer: [A] -> because [E]
     # T_a  >> question: [Q] reason: [E] -> the answer is [A]
 
-    def get_dataset(self, anno, is_train = False):
-        cached_filename = f"vqax_shot-{self.fewshot_num}_seed-{self.cfg.seed}.cache"
+    def get_dataset(self, anno, mode):
+        cached_filename = f"vqax_shot-{self.fewshot_num}_{mode}_seed-{self.cfg.seed}.cache"
         
         # Caching
         if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)):
@@ -142,13 +203,13 @@ class VQAXDataModule(BaseDataModule):
                     ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
 
             # Set image directory
-            if is_train:
-                img_dir = self.cfg.image_dir + "/train2014/"
-            else:
+            if mode == "val":
                 img_dir = self.cfg.image_dir + "/val2014/"
+            else:
+                img_dir = self.cfg.image_dir + "/train2014/"
                     
             datasets = []
-            for i in tqdm(range(len(anno)), desc= "Processing VQA-X data"):
+            for i in tqdm(range(len(anno)), desc= "Processing VQA-X {mode} data"):
                 question_id = ids_list[i]
                 sample = anno[question_id]
                 img_name = sample['image_name']

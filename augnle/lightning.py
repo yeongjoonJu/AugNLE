@@ -13,6 +13,7 @@ from models.seq2seq import T5PrefixForConditionalGeneration
 from models.ViT import ImageEncoder
 from transformers import SwinModel
 
+BECAUSE = f"because"
 
 class PromptTuning(LightningModule):
     def __init__(self, hparams, **kwargs):
@@ -38,6 +39,8 @@ class PromptTuning(LightningModule):
         setattr(self.config, 'prefix_len', hparams.prefix_len)
         
         self.tokenizer = T5Tokenizer.from_pretrained(hparams.lm_backbone)
+        
+        self.beacuse_token = self.tokenizer(BECAUSE).input_ids
         # num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<situation>', '<answer>']})
         
         # self.config.add_cross_attention = True
@@ -114,6 +117,21 @@ class PromptTuning(LightningModule):
         self.log("val_loss", loss)
 
         return loss
+    
+    def predict_step(self, batch, batch_idx: int):
+
+        visual_embeddings = self.image_encoder(pixel_values=batch["img"]).last_hidden_state
+        visual_embeddings = self.visual_proj(visual_embeddings)
+
+        t_e_inputs = self.model.shared(batch["t_e_inputs"])
+        t_e_inputs = torch.cat((visual_embeddings, t_e_inputs), dim=1)
+
+        pseudo_label = self.model.generate(inputs_embeds=t_e_inputs, attention_mask=batch["t_e_attn_mask"], early_stopping= True)
+        pseudo_label = pseudo_label.cpu().numpy().tolist()[0]
+        pseudo_label = pseudo_label[1:-1]
+        pseudo_label = self.tokenizer.decode(pseudo_label, clean_up_tokenization_spaces=True)
+        
+        return pseudo_label
 
 
     def configure_optimizers(self):

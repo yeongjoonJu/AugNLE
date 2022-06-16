@@ -24,6 +24,22 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
             torch.arange(self.prefix_len).unsqueeze(0).long(),
             torch.arange(self.prefix_len, self.prefix_len*2).unsqueeze(0).long()
         ]
+    
+    def prepare_inputs_for_generation(self,input_ids,
+                                      past=None, attention_mask=None,
+                                      use_cache=None, encoder_outputs=None,
+                                      **kwargs):
+        inputs_embeds = kwargs["inputs_embeds"]
+        if past is not None:
+            input_ids = input_ids[:, -1:]
+        return {"inputs_embeds": inputs_embeds,
+                "past_key_values": past,
+                "decoder_input_ids" : input_ids,
+                # "encoder_outputs": encoder_outputs,
+                "attention_mask": attention_mask,
+                "use_cache": use_cache,
+                "generate" : True
+                }
 
     def get_mixed_prompt(self, batch_size):
         prefix_tokens1 = self.prefix_seqs[0].expand(batch_size//2,-1).to(self.device)
@@ -32,6 +48,18 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         prompt_output = self.prefix_encoder(prefix_tokens)
         prompt_output = self.dropout(prompt_output)
 
+        return prompt_output
+    
+    def get_prompt_1(self,batch_size):
+        prefix_tokens1 = self.prefix_seqs[0].expand(batch_size,-1).to(self.device)
+        prompt_output = self.prefix_encoder(prefix_tokens1)
+        prompt_output = self.dropout(prompt_output)
+        return prompt_output
+    
+    def get_prompt_2(self,batch_size):
+        prefix_tokens2 = self.prefix_seqs[1].expand(batch_size,-1).to(self.device)
+        prompt_output = self.prefix_encoder(prefix_tokens2)
+        prompt_output = self.dropout(prompt_output)
         return prompt_output
     
     def forward(self,
@@ -48,13 +76,18 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 output_attentions=None,
                 output_hidden_states=None,
                 return_dict=None,
-                encoder_only=None,):
-        
+                encoder_only=None,
+                generate = None
+                ):
         use_cache = use_cache if use_cache is not None else self.config.use_cache
         return_dict = return_dict if return_dict is not None else self.config.return_dict
         
         batch_size = inputs_embeds.shape[0]
-        prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
+        if generate is None:
+            prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
+        else:
+            prefix_embeds = self.get_prompt_1(batch_size=batch_size)
+            
         prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)
 
         inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)

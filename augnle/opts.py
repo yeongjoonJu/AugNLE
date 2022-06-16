@@ -37,7 +37,7 @@ def get_args():
     data_args.add_argument("--vis_rep_len", type=int, default=7*7, help="visual representation length")
     data_args.add_argument("--n_train_workers", type=int, default=8)
     data_args.add_argument("--n_valid_workers", type=int, default=4)
-
+    data_args.add_argument("--pseudo_data", action="store_true", help="Pseudo dataset generation")
     
     """Model related arguments"""
     model_args = parser.add_argument_group('Model related arguments')
