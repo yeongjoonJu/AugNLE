@@ -3,7 +3,7 @@ from tqdm import tqdm
 from PIL import Image
 
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Dataset
 import torchvision.transforms as transforms
 
 from pytorch_lightning import LightningDataModule
@@ -24,6 +24,53 @@ def random_data_choice(anno, num):
     
     return fewshot_data
 
+class QAGenDataset(Dataset):
+    def __init__(self, anno_path, tokenizer):
+        super().__init__()
+
+        anno = json.load(open(anno_path, "r"))
+    
+        ids_list = list(anno.keys())
+        index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
+        for k,v in anno.items():
+            if len(v['explanation']) > 1:   # some questions have more than one explanation 
+                ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+        
+        self.inputs = []
+        self.labels = []
+        for i in tqdm(range(len(anno))):
+            question_id = ids_list[i]
+            sample = anno[question_id]
+
+            question_txt = utils.proc_ques(sample['question'])    # question
+            answer_txt = utils.proc_ans(sample['answers'])
+            exp_idx = index_tracker[question_id]
+            explain_txt = sample['explanation'][exp_idx]
+
+            # if one more explanations
+            if exp_idx > 0:
+                index_tracker[question_id] -= 1    # decrease usage
+            
+            # composition of text
+            # because [E] -> question: [Q], the answer is [A]
+            t_e_input = f"because {explain_txt}"
+            t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
+
+            # tokenize and encode
+            t_e_input = tokenizer(t_e_input).input_ids
+            t_e_label = tokenizer(t_e_label).input_ids
+            self.inputs.append(t_e_input)
+            self.labels.append(t_e_label)
+
+    def __getitem__(self, index):
+        enc_input = torch.tensor(self.inputs[index], dtype=torch.long)
+        label = torch.tensor(self.labels[index], dtype=torch.long)
+
+        return enc_input, label
+    
+    def __len__(self):
+        return len(self.inputs)
+        
 
 class BaseDataModule(LightningDataModule):
     def __init__(self, hparams, mode):
@@ -34,7 +81,7 @@ class BaseDataModule(LightningDataModule):
         # self.img_transform = transforms.Compose([transforms.Resize((hparams.img_size, hparams.img_size)),
         #                                          transforms.ToTensor(),
         #                                          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
+        # self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
         self.tokenizer = T5Tokenizer.from_pretrained(self.cfg.lm_backbone)
         # n_add_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
 

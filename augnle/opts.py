@@ -10,7 +10,7 @@ def get_args():
     optim_args.add_argument('--eval_batch_size', type=int,  default= 32, help='Evalutatino batch Size')
     optim_args.add_argument('--adam_epsilon', type=float,  default= 1e-8, help='Adam epsilon')
     optim_args.add_argument('--warmup_steps', type=int,  default= 100, help='Warmup Steps')
-    optim_args.add_argument('--weight_decay', type=float,  default= 0.04, help='Warmup Steps')
+    optim_args.add_argument('--weight_decay', type=float,  default= 1e-5, help='Warmup Steps') # adamw: 0.04
     optim_args.add_argument('--learning_rate', type=float,  default=5e-5, help='Initial Learning rate')
     optim_args.add_argument( "--gradient_accumulation_steps",type=int, default=1, 
                             help="Number of updates steps to accumulate before performing a backward/update pass.")
@@ -18,8 +18,8 @@ def get_args():
                             help="validation check interval ratio")
     optim_args.add_argument( "--gradient_cliping",type=float, default=0.5, 
                             help=" The value at which to clip gradients ")
-    optim_args.add_argument( "--temperature",type=int, default=0, help=" Temperature ")
     optim_args.add_argument('--requires_grad', action="store_true", help='requiring gradients')
+    optim_args.add_argument("--optimizer", type=str, default="adafactor")
     
     
     """Data related arguments"""
@@ -41,7 +41,7 @@ def get_args():
     
     """Model related arguments"""
     model_args = parser.add_argument_group('Model related arguments')
-    model_args.add_argument("--lm_backbone", type=str, default="google/t5-large-lm-adapt", help="Pretrained language model")
+    model_args.add_argument("--lm_backbone", type=str, default="google/t5-xl-lm-adapt", help="Pretrained language model")
     model_args.add_argument("--visual_backbone", type=str, default="microsoft/swin-base-patch4-window7-224-in22k")
     model_args.add_argument('--max_epochs', type=int, default=10, help='Max epoch size')
     model_args.add_argument('--load_from_epoch', type=str, default=None, help='Loading from epoch')
@@ -51,6 +51,12 @@ def get_args():
     model_args.add_argument("--prefix_len", type=int, default=100)
     model_args.add_argument("--prefix_dropout", type=float, default=0.1)
 
+    """Inference related arguments"""
+    model_args.add_argument("--load_ckpt_path", default=None, type=str)
+    model_args.add_argument("--top_p", type=float, default=None)
+    model_args.add_argument("--top_k", type=int, default=None)
+    model_args.add_argument("--temperature",type=float, default=1.0, help=" Temperature ")
+    model_args.add_argument("--qa_save_dir", type=str, default="aug_results")
 
     """Logging related arguments"""
     misc_args = parser.add_argument_group('Logging related & Misc arguments')
@@ -58,9 +64,6 @@ def get_args():
     misc_args.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name for wandb')
     misc_args.add_argument('--ngpu', type=int, default=1, help='Number of gpu')
     misc_args.add_argument('--ckpt_dir', type=str, default="./ckpts", help='Checkpoint directory')
-
-
-
 
     args = parser.parse_args()
     return args
