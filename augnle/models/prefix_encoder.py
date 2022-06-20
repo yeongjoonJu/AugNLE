@@ -12,11 +12,12 @@ class PrefixEncoder(torch.nn.Module):
         self.prefix_projection = config.prefix_projection
         if self.prefix_projection:
             # Use a two-layer MLP to encode the prefix
-            self.embedding = torch.nn.Embedding(config.prefix_len*2, config.hidden_size) # two tasks
+            self.embedding = torch.nn.Embedding(config.prefix_len, config.hidden_size) # two tasks
             self.trans = torch.nn.Sequential(
-                torch.nn.Linear(config.hidden_size, config.prefix_hidden_size),
+                torch.nn.Linear(config.hidden_size, config.hidden_size),
+                torch.nn.Dropout(config.prefix_dropout),
                 torch.nn.Tanh(),
-                torch.nn.Linear(config.prefix_hidden_size, config.hidden_size)
+                torch.nn.Linear(config.hidden_size, config.hidden_size)
             )
         else:
             self.embedding = torch.nn.Embedding(config.prefix_seq_len, config.hidden_size)

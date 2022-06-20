@@ -1,11 +1,31 @@
 import clip
 import torch
 import torch.nn as nn
+from transformers import SwinModel
 
-class ImageEncoder(nn.Module):
+class SwinImageEncoder(nn.Module):
+    def __init__(self, backbone, project_dim):
+        super(SwinImageEncoder, self).__init__()
+        self.encoder = SwinModel.from_pretrained(backbone)
+        self.visual_proj = nn.Sequential(
+            nn.Linear(self.encoder.num_features, self.encoder.num_features),
+            nn.GELU(),
+            nn.Linear(self.encoder.num_features, project_dim)
+        )
+        for p in self.encoder.parameters():
+            p.requires_grad = False
+
+    def forward(self, pixel_values):
+        visual_embeddings = self.encoder(pixel_values=pixel_values).last_hidden_state
+        visual_embeddings = self.visual_proj(visual_embeddings)
+
+        return visual_embeddings
+
+
+class CLIPImageEncoder(nn.Module):
 
     def __init__(self, device):
-        super(ImageEncoder, self).__init__()
+        super(CLIPImageEncoder, self).__init__()
         self.encoder, _ = clip.load("ViT-B/16", device= device)   # loads already in eval mode
         
     def forward(self, x):

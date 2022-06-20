@@ -82,3 +82,22 @@ wget https://storage.googleapis.com/localized-narratives/annotations/open_images
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
 ~~~
 
+Install NLG evaluation package for filtering
+
+~~~bash
+pip install git+https://github.com/Maluuba/nlg-eval.git@master
+nlg-eval --setup
+~~~
+
+### Detect objects in images
+
+~~~bash
+pip install timm
+~~~
+
+### Download image captioning datasets
+
+~~~bash
+cd captioning_data
+bash download.sh # please check download.sh file for the conceptual captions dataset
+~~~

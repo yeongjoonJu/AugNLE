@@ -1,3 +1,4 @@
+from sys import prefix
 import torch
 import torch.nn
 from torch.nn import CrossEntropyLoss
@@ -18,11 +19,11 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         for param in self.parameters():
             param.requires_grad = False
 
-        self.dropout = torch.nn.Dropout(config.prefix_dropout)
-        self.prefix_encoder = PrefixEncoder(config)
+        self.prefix_encoder_A = PrefixEncoder(config)
+        self.prefix_encoder_B = PrefixEncoder(config)
         self.prefix_seqs = [
             torch.arange(self.prefix_len).unsqueeze(0).long(),
-            torch.arange(self.prefix_len, self.prefix_len*2).unsqueeze(0).long()
+            torch.arange(self.prefix_len).unsqueeze(0).long()
         ]
     
     def prepare_inputs_for_generation(self,input_ids,
@@ -41,14 +42,36 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 "generate" : True
                 }
 
+    def prepare_inputs_for_generation(self, input_ids,
+                                      past=None, attention_mask=None,
+                                      use_cache=None, encoder_outputs=None,
+                                      **kwargs):
+        if past is not None:
+            input_ids = input_ids[:, -1:]
+
+        return {"decoder_input_ids": input_ids,
+                "past_key_values": past,
+                "encoder_outputs": encoder_outputs,
+                "attention_mask": attention_mask,
+                "use_cache": use_cache,}
+    
+    def get_prompt_A(self, batch_size):
+        prefix_tokens = self.prefix_seqs[0].expand(batch_size,-1).to(self.device)
+        return self.prefix_encoder_A(prefix_tokens)
+    
+    def get_prompt_B(self, batch_size):
+        prefix_tokens = self.prefix_seqs[1].expand(batch_size,-1).to(self.device)
+        return self.prefix_encoder_B(prefix_tokens)
+
+
     def get_mixed_prompt(self, batch_size):
         prefix_tokens1 = self.prefix_seqs[0].expand(batch_size//2,-1).to(self.device)
         prefix_tokens2 = self.prefix_seqs[1].expand(batch_size-batch_size//2,-1).to(self.device)
+        prefix_tokens1 = self.prefix_encoder_A(prefix_tokens1)
+        prefix_tokens2 = self.prefix_encoder_B(prefix_tokens2)
         prefix_tokens = torch.cat((prefix_tokens1, prefix_tokens2), dim=0)
-        prompt_output = self.prefix_encoder(prefix_tokens)
-        prompt_output = self.dropout(prompt_output)
 
-        return prompt_output
+        return prefix_tokens
 
     def unfreeze(self):
         for param in self.parameters():
@@ -56,18 +79,6 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         
         for param in self.prefix_encoder.parameters():
             param.requires_grad = False
-    
-    def get_prompt_1(self,batch_size):
-        prefix_tokens1 = self.prefix_seqs[0].expand(batch_size,-1).to(self.device)
-        prompt_output = self.prefix_encoder(prefix_tokens1)
-        prompt_output = self.dropout(prompt_output)
-        return prompt_output
-    
-    def get_prompt_2(self,batch_size):
-        prefix_tokens2 = self.prefix_seqs[1].expand(batch_size,-1).to(self.device)
-        prompt_output = self.prefix_encoder(prefix_tokens2)
-        prompt_output = self.dropout(prompt_output)
-        return prompt_output
     
     def forward(self,
                 input_ids=None,
@@ -84,33 +95,30 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 output_hidden_states=None,
                 return_dict=None,
                 encoder_only=None,
-                generate = None,
-                prompting=True
-                ):
+                prompting_A=False,
+                prompting_B=False,
+                prompting_AB=False):
+        
         use_cache = use_cache if use_cache is not None else self.config.use_cache
         return_dict = return_dict if return_dict is not None else self.config.return_dict
         
-        if generate is None:
-            prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
-        else:
-            prefix_embeds = self.get_prompt_1(batch_size=batch_size)
-            
-        prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)
-
-        inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)
-        attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
-        
-        
-        if prompting:
-            batch_size = input_ids.shape[0]
-            prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
-            prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)
-            inputs_embeds = self.shared(input_ids)
-            inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)
-            attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
-        
         if encoder_outputs is None:
-            encoder_outputs = self.encoder(input_ids=None,
+            batch_size = input_ids.shape[0]
+            if prompting_AB:
+                prefix_embeds = self.get_mixed_prompt(batch_size=batch_size)
+            elif prompting_A:
+                prefix_embeds = self.get_prompt_A(batch_size=batch_size)
+            elif prompting_B:
+                prefix_embeds = self.get_prompt_B(batch_size=batch_size)
+            
+            if prompting_AB or prompting_A or prompting_B:
+                prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)
+                inputs_embeds = self.shared(input_ids)
+                inputs_embeds = torch.cat((prefix_embeds, inputs_embeds), dim=1)
+                attention_mask = torch.cat((prefix_attention_mask, attention_mask), dim=1)
+                input_ids=None
+                
+            encoder_outputs = self.encoder(input_ids=input_ids,
                                            attention_mask=attention_mask,
                                            inputs_embeds=inputs_embeds,
                                            return_dict=return_dict)
@@ -150,7 +158,6 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 attention_mask = attention_mask.to(self.decoder.first_device)
             if decoder_attention_mask is not None:
                 decoder_attention_mask = decoder_attention_mask.to(self.decoder.first_device)
-        
         
         decoder_outputs = self.decoder(input_ids=decoder_input_ids,
                                   inputs_embeds=decoder_inputs_embeds,

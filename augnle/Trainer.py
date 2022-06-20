@@ -1,8 +1,7 @@
-import os
-import json
+import os, json
 import torch
 from pytorch_lightning import Trainer, seed_everything
-from dataloader import VQAXDataModule
+from dataloader import VQAXDataModule, QAGenDataset
 from lightning import Adaptation, PromptTuning
 import opts
 import datetime
@@ -10,7 +9,9 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from transformers import T5Config, T5Tokenizer
 from models.seq2seq import T5PrefixForConditionalGeneration
-from models.ViT import SwinImageEncoder
+from torch.utils.data import DataLoader
+
+# from models.ViT import SwinImageEncoder
 
 AVAIL_GPUS = torch.cuda.device_count()
 
@@ -34,15 +35,16 @@ def load_T5_backbone(args):
     return config, tokenizer, backbone
 
 
-def multi_task_prompt_tuning(backbone, image_encoder, generate, args):
+def multi_task_prompt_tuning(backbone, tokenizer, args):
     args.filename = 'ckpt_stats_' + str(args.load_from_epoch) + '.tar'
     
     # Checkpoint call back
     now = datetime.datetime.now()
-    nowDatetime = now.strftime('%Y-%m-%d_%H:%M')
-    ckpt_dir = args.ckpt_dir + '/' + nowDatetime + "/"
-    if not os.path.isdir(ckpt_dir):
-        os.mkdir(ckpt_dir)
+    if args.experiment_name is None:
+        nowDatetime = now.strftime('%Y-%m-%d_%H:%M')
+        ckpt_dir = args.ckpt_dir + '/' + nowDatetime + "/"
+    else:
+        ckpt_dir = args.ckpt_dir + "/" + args.experiment_name
 
     wandb_logger = WandbLogger(project="Aug_NLX", name=args.experiment_name)
     checkpoint_callback = checkpoint_callback = ModelCheckpoint(
@@ -64,15 +66,53 @@ def multi_task_prompt_tuning(backbone, image_encoder, generate, args):
                     logger=wandb_logger,)
 
     dm = VQAXDataModule(args, mode="prompt")
-    model = PromptTuning(hparams=args, lm_backbone=backbone, image_encoder=image_encoder)
+    model = PromptTuning(hparams=args, lm_backbone=backbone, tokenizer=tokenizer)
     trainer.fit(model, datamodule=dm)
 
-    if generate:
-          predictions = trainer.predict(model, datamodule=dm)
-          with open(args.output_dir, "w", encoding="utf-8") as file:
-            json.dump(predictions, file)
-          
     return model.get_trained_weights()
+
+
+def generate_QA_from_explanation(backbone, tokenizer, args):
+    def collate_wrapper(batch):
+        batch = list(zip(*batch))
+        sample = {}
+
+        # enc max len
+        enc_max_len = max([x.size(0) for x in batch[0]])
+        # enc_input
+        enc_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+        enc_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+        for i, x in enumerate(batch[0]):
+            enc_inputs[i,:x.size(0)] = x
+            enc_attn_mask[i,:x.size(0)] = 1.0
+        
+        # label
+        dec_max_len = max([x.size(0) for x in batch[1]])
+        label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
+        for i, x in enumerate(batch[1]):
+            label[i,:x.size(0)] = x
+
+        sample["enc_inputs"] = enc_inputs
+        sample["attn_mask"] = enc_attn_mask
+        sample["labels"] = label
+
+        return sample
+
+    if args.load_ckpt_path is not None:
+        model = PromptTuning.load_from_checkpoint(args.load_ckpt_path, strict=False, hparams=args, lm_backbone=backbone, tokenizer=tokenizer)
+    else:
+        model = PromptTuning(hparams=args, lm_backbone=backbone, tokenizer=tokenizer)
+    trainer = Trainer(accelerator = "gpu", gpus= args.ngpu)
+    dataset = QAGenDataset(args.valid_anno_path, tokenizer)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=args.eval_batch_size, num_workers=args.n_valid_workers,\
+                            pin_memory=True, collate_fn=collate_wrapper)
+    results = trainer.predict(model, dataloaders=dataloader)
+    if not os.path.exists(args.qa_save_dir):
+        os.mkdir(args.qa_save_dir)
+
+    with open(f"{args.qa_save_dir}/k-{args.top_k}_p-{args.top_p}_t-{args.temperature}.json", "w") as fout:
+        json.dump(results, fout, indent=2)
+
 
 
 def adaptation(backbone, image_encoder, tokenizer, args):
@@ -117,14 +157,13 @@ if __name__ == '__main__':
 
     # Load pretrained models
     config, tokenizer, backbone = load_T5_backbone(args)
-    image_encoder = SwinImageEncoder(args.visual_backbone, config.d_model)
+    # image_encoder = SwinImageEncoder(args.visual_backbone, config.d_model)
 
     # Adaptation
     # backbone, image_encoder = adaptation(backbone, image_encoder, tokenizer, args)
 
-    # backbone.cpu()
-    # image_encoder.cpu()
-    # torch.cuda.empty_cache()
-
-    # Multi-task prompt tuning
-    multi_task_prompt_tuning(backbone, image_encoder, True, args)
+    if args.load_ckpt_path is None:
+        # Multi-task prompt tuning
+        multi_task_prompt_tuning(backbone, tokenizer, args)
+    else:
+        generate_QA_from_explanation(backbone, tokenizer, args=args)
