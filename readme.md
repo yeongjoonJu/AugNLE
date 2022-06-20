@@ -35,6 +35,9 @@ gdown https://drive.google.com/drive/folders/1b8kUPbgtEduiz8A_VbUg0W_vca7PyXsZ -
 mv "cococaption annot"/* cococaption/annotations/ 
 ~~~
 
+### Download Captioning dataset
+
+
 Conceptual Captions
 <training split, validation split, and image labels>
 ~~~bash
