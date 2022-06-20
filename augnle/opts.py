@@ -14,7 +14,7 @@ def get_args():
     optim_args.add_argument('--learning_rate', type=float,  default=5e-5, help='Initial Learning rate')
     optim_args.add_argument( "--gradient_accumulation_steps",type=int, default=1, 
                             help="Number of updates steps to accumulate before performing a backward/update pass.")
-    optim_args.add_argument( "--val_check_interval",type=float, default=0.5, 
+    optim_args.add_argument( "--val_check_interval",type=float, default=1.0, 
                             help="validation check interval ratio")
     optim_args.add_argument( "--gradient_cliping",type=float, default=0.5, 
                             help=" The value at which to clip gradients ")
@@ -32,11 +32,12 @@ def get_args():
     data_args.add_argument('--img_size', type=int, default=224, help='Image size')        
     data_args.add_argument("--fewshot_ratio", type=float, default=-1, help="Ratio of few-shot data")
     data_args.add_argument("--fewshot_num", type=int, default=500, help="The number of few-shot data")
-    data_args.add_argument("--cached_dir", type=str, default="cached", help="Directory with cached file")
+    data_args.add_argument("--cached_dir", type=str, default="cached/obj", help="Directory with cached file")
     data_args.add_argument("--vis_rep_len", type=int, default=7*7, help="visual representation length")
     data_args.add_argument("--n_train_workers", type=int, default=8)
     data_args.add_argument("--n_valid_workers", type=int, default=4)
     data_args.add_argument("--discrete_prompt", type=str, default="answer and explain: ")
+    data_args.add_argument("--object_label_dir", type=str, default="../nle_anno/VQA-X")
 
     
     """Model related arguments"""
@@ -61,7 +62,7 @@ def get_args():
     """Logging related arguments"""
     misc_args = parser.add_argument_group('Logging related & Misc arguments')
     misc_args.add_argument('--seed', type=int, default=42, help='Random Seed')
-    misc_args.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name for wandb')
+    misc_args.add_argument('--experiment_name', type=str, default=None, help='Experiment name for wandb')
     misc_args.add_argument('--ngpu', type=int, default=1, help='Number of gpu')
     misc_args.add_argument('--ckpt_dir', type=str, default="./ckpts", help='Checkpoint directory')
 

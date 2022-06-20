@@ -10,6 +10,6 @@ CUDA_VISIBLE_DEVICES=2 python Trainer.py \
 --dec_max_len 64 \
 --eval_batch_size 32 \
 --prefix_len 100 \
---load_ckpt_path ckpts/2022-06-17_02:23/epoch=03-val_loss=0.33.ckpt \
+--load_ckpt_path ckpts/sep_prompt_adamw_b12_lr0.2/epoch=02-val_loss=0.29.ckpt \
 --top_p 0.7 \
 --temperature 1.0

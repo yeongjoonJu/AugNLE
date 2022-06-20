@@ -35,15 +35,16 @@ def load_T5_backbone(args):
     return config, tokenizer, backbone
 
 
-def multi_task_prompt_tuning(backbone, args):
+def multi_task_prompt_tuning(backbone, tokenizer, args):
     args.filename = 'ckpt_stats_' + str(args.load_from_epoch) + '.tar'
     
     # Checkpoint call back
     now = datetime.datetime.now()
-    nowDatetime = now.strftime('%Y-%m-%d_%H:%M')
-    ckpt_dir = args.ckpt_dir + '/' + nowDatetime + "/"
-    if not os.path.isdir(ckpt_dir):
-        os.mkdir(ckpt_dir)
+    if args.experiment_name is None:
+        nowDatetime = now.strftime('%Y-%m-%d_%H:%M')
+        ckpt_dir = args.ckpt_dir + '/' + nowDatetime + "/"
+    else:
+        ckpt_dir = args.ckpt_dir + "/" + args.experiment_name
 
     wandb_logger = WandbLogger(project="Aug_NLX", name=args.experiment_name)
     checkpoint_callback = checkpoint_callback = ModelCheckpoint(
@@ -106,10 +107,10 @@ def generate_QA_from_explanation(backbone, tokenizer, args):
     dataloader = DataLoader(dataset, shuffle=False, batch_size=args.eval_batch_size, num_workers=args.n_valid_workers,\
                             pin_memory=True, collate_fn=collate_wrapper)
     results = trainer.predict(model, dataloaders=dataloader)
-    if not os.path.exists(args.qa_save_path):
-        os.mkdir(args.qa_save_path)
-        
-    with open(f"{args.qa_save_path}/k-{args.top_k}_p-{args.top_p}_t-{args.temperature}.json", "w") as fout:
+    if not os.path.exists(args.qa_save_dir):
+        os.mkdir(args.qa_save_dir)
+
+    with open(f"{args.qa_save_dir}/k-{args.top_k}_p-{args.top_p}_t-{args.temperature}.json", "w") as fout:
         json.dump(results, fout, indent=2)
 
 
@@ -161,10 +162,8 @@ if __name__ == '__main__':
     # Adaptation
     # backbone, image_encoder = adaptation(backbone, image_encoder, tokenizer, args)
 
-    # backbone.cpu()
-    # image_encoder.cpu()
-    # torch.cuda.empty_cache()
-
-    # Multi-task prompt tuning
-    # multi_task_prompt_tuning(backbone, args)
-    generate_QA_from_explanation(backbone, tokenizer, args=args)
+    if args.load_ckpt_path is None:
+        # Multi-task prompt tuning
+        multi_task_prompt_tuning(backbone, tokenizer, args)
+    else:
+        generate_QA_from_explanation(backbone, tokenizer, args=args)

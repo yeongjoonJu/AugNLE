@@ -19,11 +19,11 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         for param in self.parameters():
             param.requires_grad = False
 
-        self.dropout = torch.nn.Dropout(config.prefix_dropout)
-        self.prefix_encoder = PrefixEncoder(config)
+        self.prefix_encoder_A = PrefixEncoder(config)
+        self.prefix_encoder_B = PrefixEncoder(config)
         self.prefix_seqs = [
             torch.arange(self.prefix_len).unsqueeze(0).long(),
-            torch.arange(self.prefix_len, self.prefix_len*2).unsqueeze(0).long()
+            torch.arange(self.prefix_len).unsqueeze(0).long()
         ]
 
     def prepare_inputs_for_generation(self, input_ids,
@@ -41,21 +41,21 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
     
     def get_prompt_A(self, batch_size):
         prefix_tokens = self.prefix_seqs[0].expand(batch_size,-1).to(self.device)
-        return self.dropout(self.prefix_encoder(prefix_tokens))
+        return self.prefix_encoder_A(prefix_tokens)
     
     def get_prompt_B(self, batch_size):
         prefix_tokens = self.prefix_seqs[1].expand(batch_size,-1).to(self.device)
-        return self.dropout(self.prefix_encoder(prefix_tokens))
+        return self.prefix_encoder_B(prefix_tokens)
 
 
     def get_mixed_prompt(self, batch_size):
         prefix_tokens1 = self.prefix_seqs[0].expand(batch_size//2,-1).to(self.device)
         prefix_tokens2 = self.prefix_seqs[1].expand(batch_size-batch_size//2,-1).to(self.device)
+        prefix_tokens1 = self.prefix_encoder_A(prefix_tokens1)
+        prefix_tokens2 = self.prefix_encoder_B(prefix_tokens2)
         prefix_tokens = torch.cat((prefix_tokens1, prefix_tokens2), dim=0)
-        prompt_output = self.prefix_encoder(prefix_tokens)
-        prompt_output = self.dropout(prompt_output)
 
-        return prompt_output
+        return prefix_tokens
 
     def unfreeze(self):
         for param in self.parameters():

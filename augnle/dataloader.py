@@ -1,4 +1,5 @@
 import json, os, random
+from pyexpat import model
 from tqdm import tqdm
 from PIL import Image
 
@@ -81,7 +82,7 @@ class BaseDataModule(LightningDataModule):
         # self.img_transform = transforms.Compose([transforms.Resize((hparams.img_size, hparams.img_size)),
         #                                          transforms.ToTensor(),
         #                                          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        # self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
+        self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
         self.tokenizer = T5Tokenizer.from_pretrained(self.cfg.lm_backbone)
         # n_add_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
 
@@ -219,6 +220,13 @@ class VQAXDataModule(BaseDataModule):
                 img_dir = self.cfg.image_dir + "/train2014/"
             else:
                 img_dir = self.cfg.image_dir + "/val2014/"
+            
+            obj_labels = None
+            if self.cfg.object_label_dir is not None:
+                _mode = "val" if mode=="valid" or mode=="val" else "train"
+                obj_label_path = f"{self.cfg.object_label_dir}/obj_{_mode}_labels.json"
+                with open(obj_label_path, "r") as fin:
+                    obj_labels = json.load(fin)
                     
             datasets = []
             for i in tqdm(range(len(anno)), desc= "Processing VQA-X data"):
@@ -234,10 +242,6 @@ class VQAXDataModule(BaseDataModule):
                 # if one more explanations
                 if exp_idx > 0:
                     index_tracker[question_id] -= 1    # decrease usage
-                
-                # Image
-                img_path = img_dir + img_name
-                img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
 
                 if is_prompt:
                     # composition of text
@@ -247,6 +251,11 @@ class VQAXDataModule(BaseDataModule):
                     # question: [Q] reason: [E] -> the answer is [A]
                     t_a_input = f"question: {question_txt} reason: {explain_txt}"
                     t_a_label = f"the answer is {answer_txt}"
+
+                    if obj_labels is not None:
+                        obj_label = obj_labels[img_name]
+                        if obj_label:
+                            t_e_input = t_e_input + ". " + obj_label
 
                     # tokenize and encode
                     t_e_input = self.tokenizer(t_e_input).input_ids
@@ -263,6 +272,10 @@ class VQAXDataModule(BaseDataModule):
                     # add data
                     datasets.append((t_e_input, t_e_label, t_a_input, t_a_label))
                 else:
+                    # Image
+                    img_path = img_dir + img_name
+                    img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
+
                     # composition of text
                     # answer and explain: [I] question: [Q] -> the answer is [A] because [E]
                     enc_input = f"question: {question_txt}"
