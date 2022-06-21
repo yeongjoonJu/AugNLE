@@ -37,31 +37,6 @@ mv "cococaption annot"/* cococaption/annotations/
 
 ### Download Captioning dataset
 
-
-Conceptual Captions
-<training split, validation split, and image labels>
-~~~bash
-wget https://storage.cloud.google.com/gcc-data/Train/GCC-training.tsv?_ga=2.191230122.-1896153081.1529438250
-wget https://storage.cloud.google.com/gcc-data/Validation/GCC-1.1.0-Validation.tsv?_ga=2.141047602.-1896153081.1529438250
-wget https://storage.cloud.google.com/conceptual-captions-v1-1-labels/Image_Labels_Subset_Train_GCC-Labels-training.tsv?_ga=2.234395421.-20118413.1607637118
-~~~
-VizWiz visual question answering dataset 
-<training set, validation set, test set, and annotations>
-~~~bash
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/train.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/val.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/test.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/vqa_data/Annotations.zip
-~~~
-ReferIT dataset
-<train dataset, test dataset>
-~~~bash
-wget http://tamaraberg.com/referitgame/ReferitData.zip
-wget http://tamaraberg.com/referitgame/test_set_ground_truth.zip_ga=2.234395421.-20118413.1607637118
-wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part1.rar
-wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part2.rar
-wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part3.rar
-~~~
 nocaps
 <validation set, test set>
 ~~~bash
