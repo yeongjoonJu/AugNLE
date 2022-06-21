@@ -70,6 +70,9 @@ wget https://s3.amazonaws.com/nocaps/nocaps_test_image_info.json
 ~~~
 Localized Narratives
 <train image set(10), validation image set , test image set, train caption set, validation caption set, test caption set >
+image data from open-images-dataset\
+https://github.com/cvdfoundation/open-images-dataset.git
+
 ~~~bash
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00000-of-00010.jsonl
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00001-of-00010.jsonl
