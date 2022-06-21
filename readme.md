@@ -74,18 +74,6 @@ image data from open-images-dataset\
 https://github.com/cvdfoundation/open-images-dataset.git
 
 ~~~bash
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00000-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00001-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00002-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00003-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00004-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00005-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00006-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00007-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00008-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00009-of-00010.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_validation_localized_narratives.jsonl
-wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_localized_narratives.jsonl
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_captions.jsonl
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_validation_captions.jsonl
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
