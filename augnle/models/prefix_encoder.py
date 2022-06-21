@@ -20,7 +20,11 @@ class PrefixEncoder(torch.nn.Module):
                 torch.nn.Linear(config.hidden_size, config.hidden_size)
             )
         else:
-            self.embedding = torch.nn.Embedding(config.prefix_seq_len, config.hidden_size)
+            self.embedding = torch.nn.Embedding(config.prefix_len, config.hidden_size)
+
+    def weight_initialization(self, embed_vector):
+        embed_vector = embed_vector.expand(self.embedding.weight.shape[0], -1)
+        self.embedding.weight.data.copy_(embed_vector)
 
     def forward(self, prefix: torch.Tensor):
         if self.prefix_projection:

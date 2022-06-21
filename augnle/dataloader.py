@@ -26,7 +26,7 @@ def random_data_choice(anno, num):
     return fewshot_data
 
 class QAGenDataset(Dataset):
-    def __init__(self, anno_path, tokenizer):
+    def __init__(self, anno_path, object_label_dir, tokenizer):
         super().__init__()
 
         anno = json.load(open(anno_path, "r"))
@@ -36,12 +36,16 @@ class QAGenDataset(Dataset):
         for k,v in anno.items():
             if len(v['explanation']) > 1:   # some questions have more than one explanation 
                 ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+
+        with open(object_label_dir, "r") as fin:
+            obj_labels = json.load(fin)
         
         self.inputs = []
         self.labels = []
         for i in tqdm(range(len(anno))):
             question_id = ids_list[i]
             sample = anno[question_id]
+            img_name = sample['image_name']
 
             question_txt = utils.proc_ques(sample['question'])    # question
             answer_txt = utils.proc_ans(sample['answers'])
@@ -54,8 +58,13 @@ class QAGenDataset(Dataset):
             
             # composition of text
             # because [E] -> question: [Q], the answer is [A]
-            t_e_input = f"because {explain_txt}"
+            t_e_input = f"because {explain_txt}. "
             t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
+
+            obj_label = obj_labels[img_name]
+            if obj_label:
+                t_e_input = t_e_input + obj_label
+            t_e_input = t_e_input.strip()
 
             # tokenize and encode
             t_e_input = tokenizer(t_e_input).input_ids
@@ -74,7 +83,7 @@ class QAGenDataset(Dataset):
         
 
 class BaseDataModule(LightningDataModule):
-    def __init__(self, hparams, mode):
+    def __init__(self, hparams):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.cfg = hparams
@@ -82,7 +91,7 @@ class BaseDataModule(LightningDataModule):
         # self.img_transform = transforms.Compose([transforms.Resize((hparams.img_size, hparams.img_size)),
         #                                          transforms.ToTensor(),
         #                                          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
+        # self.img_transform = AutoFeatureExtractor.from_pretrained(self.cfg.visual_backbone)
         self.tokenizer = T5Tokenizer.from_pretrained(self.cfg.lm_backbone)
         # n_add_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<scene>', '<answer>']})
 
@@ -98,86 +107,55 @@ class BaseDataModule(LightningDataModule):
             self.fewshot_num = hparams.fewshot_num
 
         train_anno = random_data_choice(train_anno, self.fewshot_num)
-        self.dataset["train"] = self.get_dataset(train_anno, mode=mode+"_train")
+        self.dataset["train"] = self.get_dataset(train_anno, mode="train")
 
         valid_anno = json.load(open(hparams.valid_anno_path, "r"))
-        self.dataset["valid"] = self.get_dataset(valid_anno, mode=mode+"_valid")
+        self.dataset["valid"] = self.get_dataset(valid_anno, mode="val")
 
         # Collate function definition
-        if mode=="prompt":
-            def collate_wrapper(batch):
-                batch = list(zip(*batch))
-                sample = {}
+        def collate_wrapper(batch):
+            batch = list(zip(*batch))
+            sample = {}
 
-                # enc max len
-                t_e_max_len = max([x.size(0) for x in batch[0]])
-                t_a_max_len = max([x.size(0) for x in batch[2]])
-                enc_max_len = t_e_max_len if t_e_max_len > t_a_max_len else t_a_max_len
+            # enc max len
+            t_e_max_len = max([x.size(0) for x in batch[0]])
+            t_a_max_len = max([x.size(0) for x in batch[2]])
+            enc_max_len = t_e_max_len if t_e_max_len > t_a_max_len else t_a_max_len
 
-                # dec max len
-                ex_max_len = max([x.size(0) for x in batch[1]])
-                an_max_len = max([x.size(0) for x in batch[3]])
-                dec_max_len = ex_max_len if ex_max_len > an_max_len else an_max_len 
-                
-                # t_e_input
-                t_e_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
-                t_e_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[0]):
-                    t_e_inputs[i,:x.size(0)] = x
-                    t_e_attn_mask[i,:x.size(0)] = 1.0
-                
-                # explanation (t_e_target)
-                t_e_label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[1]):
-                    t_e_label[i,:x.size(0)] = x
+            # dec max len
+            ex_max_len = max([x.size(0) for x in batch[1]])
+            an_max_len = max([x.size(0) for x in batch[3]])
+            dec_max_len = ex_max_len if ex_max_len > an_max_len else an_max_len 
+            
+            # t_e_input
+            t_e_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+            t_e_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[0]):
+                t_e_inputs[i,:x.size(0)] = x
+                t_e_attn_mask[i,:x.size(0)] = 1.0
+            
+            # explanation (t_e_target)
+            t_e_label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[1]):
+                t_e_label[i,:x.size(0)] = x
 
-                # t_a_input
-                t_a_inputs = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
-                t_a_attn_mask = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[2]):
-                    t_a_inputs[i,:x.size(0)] = x
-                    t_a_attn_mask[i,:x.size(0)] = 1.0
-                
-                # answer (t_a_target)
-                t_a_label = torch.zeros((len(batch[3]), dec_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[3]):
-                    t_a_label[i,:x.size(0)] = x
+            # t_a_input
+            t_a_inputs = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
+            t_a_attn_mask = torch.zeros((len(batch[2]), enc_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[2]):
+                t_a_inputs[i,:x.size(0)] = x
+                t_a_attn_mask[i,:x.size(0)] = 1.0
+            
+            # answer (t_a_target)
+            t_a_label = torch.zeros((len(batch[3]), dec_max_len), dtype=torch.long)
+            for i, x in enumerate(batch[3]):
+                t_a_label[i,:x.size(0)] = x
 
-                sample["enc_inputs"] = torch.cat((t_e_inputs, t_a_inputs), dim=0)
-                sample["attn_mask"] = torch.cat((t_e_attn_mask, t_a_attn_mask), dim=0)
-                sample["labels"] = torch.cat((t_e_label, t_a_label), dim=0)
+            sample["enc_inputs"] = torch.cat((t_e_inputs, t_a_inputs), dim=0)
+            sample["attn_mask"] = torch.cat((t_e_attn_mask, t_a_attn_mask), dim=0)
+            sample["labels"] = torch.cat((t_e_label, t_a_label), dim=0)
 
-                return sample
-        else:
-            prompt_len = len(self.tokenizer.tokenize(self.cfg.discrete_prompt))
-            def collate_wrapper(batch):
-                batch = list(zip(*batch))
-                sample = {}
-                vis_rep_len = self.cfg.vis_rep_len
-
-                # enc max len
-                enc_max_len = max([x.size(0) for x in batch[0]])
-                # dec max len
-                dec_max_len = max([x.size(0) for x in batch[1]])
-                
-                # enc_input
-                enc_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
-                enc_attn_mask = torch.zeros((len(batch[0]), prompt_len+vis_rep_len+enc_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[0]):
-                    enc_inputs[i,:x.size(0)] = x
-                    enc_attn_mask[i,:prompt_len+vis_rep_len+x.size(0)] = 1.0
-                
-                # label
-                label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
-                for i, x in enumerate(batch[1]):
-                    label[i,:x.size(0)] = x
-
-                sample["enc_inputs"] = enc_inputs
-                sample["enc_attn_mask"] = enc_attn_mask
-                sample["label"] = label
-                sample["img"] = torch.cat(batch[2])
-
-                return sample
+            return sample
 
         self.collate_fn = collate_wrapper
 
@@ -213,23 +191,14 @@ class VQAXDataModule(BaseDataModule):
                 if len(v['explanation']) > 1:   # some questions have more than one explanation 
                     ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
 
-            # Set image directory
-            stage, mode = mode.split("_")
-            is_prompt = stage=="prompt"
-            if mode=="train":
-                img_dir = self.cfg.image_dir + "/train2014/"
-            else:
-                img_dir = self.cfg.image_dir + "/val2014/"
-            
             obj_labels = None
             if self.cfg.object_label_dir is not None:
-                _mode = "val" if mode=="valid" or mode=="val" else "train"
-                obj_label_path = f"{self.cfg.object_label_dir}/obj_{_mode}_labels.json"
+                obj_label_path = f"{self.cfg.object_label_dir}/obj_{mode}_labels.json"
                 with open(obj_label_path, "r") as fin:
                     obj_labels = json.load(fin)
                     
             datasets = []
-            for i in tqdm(range(len(anno)), desc= "Processing VQA-X data"):
+            for i in tqdm(range(len(anno)), desc= f"Processing VQA-X {mode} data"):
                 question_id = ids_list[i]
                 sample = anno[question_id]
                 img_name = sample['image_name']
@@ -243,54 +212,34 @@ class VQAXDataModule(BaseDataModule):
                 if exp_idx > 0:
                     index_tracker[question_id] -= 1    # decrease usage
 
-                if is_prompt:
-                    # composition of text
-                    # because [E] -> question: [Q], the answer is [A]
-                    t_e_input = f"because {explain_txt}"
-                    t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
-                    # question: [Q] reason: [E] -> the answer is [A]
-                    t_a_input = f"question: {question_txt} reason: {explain_txt}"
-                    t_a_label = f"the answer is {answer_txt}"
+                # composition of text
+                # because [E] -> question: [Q], the answer is [A]
+                t_e_input = f"because {explain_txt}. "
+                t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
+                # question: [Q] reason: [E] -> the answer is [A]
+                t_a_input = f"question: {question_txt} reason: {explain_txt}"
+                t_a_label = f"the answer is {answer_txt}"
 
-                    if obj_labels is not None:
-                        obj_label = obj_labels[img_name]
-                        if obj_label:
-                            t_e_input = t_e_input + ". " + obj_label
+                if obj_labels is not None:
+                    obj_label = obj_labels[img_name]
+                    if obj_label:
+                        t_e_input = t_e_input + obj_label
+                    t_e_input = t_e_input.strip()
 
-                    # tokenize and encode
-                    t_e_input = self.tokenizer(t_e_input).input_ids
-                    t_e_label = self.tokenizer(t_e_label).input_ids
-                    t_a_input = self.tokenizer(t_a_input).input_ids
-                    t_a_label = self.tokenizer(t_a_label).input_ids
+                # tokenize and encode
+                t_e_input = self.tokenizer(t_e_input).input_ids
+                t_e_label = self.tokenizer(t_e_label).input_ids
+                t_a_input = self.tokenizer(t_a_input).input_ids
+                t_a_label = self.tokenizer(t_a_label).input_ids
 
-                    # Tensorize
-                    t_e_input = torch.tensor(t_e_input, dtype=torch.long)
-                    t_e_label = torch.tensor(t_e_label, dtype=torch.long)
-                    t_a_input = torch.tensor(t_a_input, dtype=torch.long)
-                    t_a_label = torch.tensor(t_a_label, dtype=torch.long)
+                # Tensorize
+                t_e_input = torch.tensor(t_e_input, dtype=torch.long)
+                t_e_label = torch.tensor(t_e_label, dtype=torch.long)
+                t_a_input = torch.tensor(t_a_input, dtype=torch.long)
+                t_a_label = torch.tensor(t_a_label, dtype=torch.long)
 
-                    # add data
-                    datasets.append((t_e_input, t_e_label, t_a_input, t_a_label))
-                else:
-                    # Image
-                    img_path = img_dir + img_name
-                    img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
-
-                    # composition of text
-                    # answer and explain: [I] question: [Q] -> the answer is [A] because [E]
-                    enc_input = f"question: {question_txt}"
-                    label = f"the answer is {answer_txt} because {explain_txt}"
-
-                    # tokenize and encode
-                    enc_input = self.tokenizer(enc_input).input_ids
-                    label = self.tokenizer(label).input_ids
-
-                    # Tensorize
-                    enc_input = torch.tensor(enc_input, dtype=torch.long)
-                    label = torch.tensor(label, dtype=torch.long)
-
-                    # add data
-                    datasets.append((enc_input, label, img))
+                # add data
+                datasets.append((t_e_input, t_e_label, t_a_input, t_a_label))
                 
             
             if not os.path.exists(self.cfg.cached_dir):

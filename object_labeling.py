@@ -38,7 +38,11 @@ def plot_results(img, prob, boxes, id2label):
     cv2.imwrite("test.jpg", cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
 number2text = {
-    2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten"
+    2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine",
+}
+
+label2plural = {
+    "person": "people", "sheep": "sheep", "knife": "knives"
 }
 
 def get_detected_objs(probs, id2label):
@@ -54,11 +58,15 @@ def get_detected_objs(probs, id2label):
     for word, cnt in objs.items():
         detected_obj_cnt += cnt
         if cnt >= 2:
-            if cnt > 10:
-                cnt = "more than ten"
+            if cnt > 9:
+                cnt = "more than nine"
             else:
                 cnt = number2text[cnt]
-            word = f"{cnt} {word} -s"
+            if word in label2plural:
+                word = label2plural[word]
+            else:
+                word = word+" -s"
+            word = f"{cnt} {word}"
         else:
             word = f"one {word}"
 
@@ -108,7 +116,7 @@ if __name__=="__main__":
     parser.add_argument("--image_dir", type=str, required=True)
     parser.add_argument("--save_path", type=str, required=True)
     parser.add_argument("--anno_path", type=str, default=None)
-    parser.add_argument("--gpu_id", type=int, default=1)
+    parser.add_argument("--gpu_id", type=int, default=0)
     args = parser.parse_args()
 
     feature_extractor = DetrFeatureExtractor.from_pretrained('facebook/detr-resnet-101-dc5')
