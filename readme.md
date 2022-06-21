@@ -58,6 +58,9 @@ ReferIT dataset
 ~~~bash
 wget http://tamaraberg.com/referitgame/ReferitData.zip
 wget http://tamaraberg.com/referitgame/test_set_ground_truth.zip_ga=2.234395421.-20118413.1607637118
+wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part1.rar
+wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part2.rar
+wget http://www-i6.informatik.rwth-aachen.de/imageclef/resources/saiaprtc12/saiaprtc12ok.part3.rar
 ~~~
 nocaps
 <validation set, test set>
