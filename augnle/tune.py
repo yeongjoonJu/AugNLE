@@ -79,16 +79,17 @@ if __name__ == '__main__':
     optim_args.add_argument('--eval_batch_size', type=int,  default= 32, help='Evalutatino batch Size')
     optim_args.add_argument('--adam_epsilon', type=float,  default= 1e-8, help='Adam epsilon')
     optim_args.add_argument('--warmup_steps', type=int,  default= 100, help='Warmup Steps')
-    optim_args.add_argument('--weight_decay', type=float,  default= 1e-5, help='Warmup Steps') # adamw: 0.04
+    optim_args.add_argument('--weight_decay', type=float,  default= 0.04, help='Warmup Steps')
     optim_args.add_argument('--learning_rate', type=float,  default=5e-5, help='Initial Learning rate')
     optim_args.add_argument( "--gradient_accumulation_steps",type=int, default=1, 
                             help="Number of updates steps to accumulate before performing a backward/update pass.")
-    optim_args.add_argument( "--val_check_interval",type=float, default=1.0, 
+    optim_args.add_argument( "--val_check_interval",type=float, default=0.5, 
                             help="validation check interval ratio")
     optim_args.add_argument( "--gradient_cliping",type=float, default=1.0, 
                             help=" The value at which to clip gradients ")
+    optim_args.add_argument( "--temperature",type=int, default=0, help=" Temperature ")
     optim_args.add_argument('--requires_grad', action="store_true", help='requiring gradients')
-    optim_args.add_argument("--optimizer", type=str, default="adafactor")
+    optim_args.add_argument('--num_workers', type=int, default=1, help='The number of workers')
     
     """Data related arguments"""
     data_args = parser.add_argument_group('Data related arguments')
@@ -114,9 +115,12 @@ if __name__ == '__main__':
     """Logging related arguments"""
     misc_args = parser.add_argument_group('Logging related & Misc arguments')
     misc_args.add_argument('--seed', type=int, default=42, help='Random Seed')
-    misc_args.add_argument('--experiment_name', type=str, default=None, help='Experiment name for wandb')
+    misc_args.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name for wandb')
     misc_args.add_argument('--ngpu', type=int, default=1, help='Number of gpu')
     misc_args.add_argument('--ckpt_dir', type=str, default="./ckpts", help='Checkpoint directory')
+
+
+
 
     args = parser.parse_args()
 

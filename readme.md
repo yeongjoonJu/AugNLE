@@ -35,22 +35,23 @@ gdown https://drive.google.com/drive/folders/1b8kUPbgtEduiz8A_VbUg0W_vca7PyXsZ -
 mv "cococaption annot"/* cococaption/annotations/ 
 ~~~
 
-Install NLG evaluation package for filtering
+### Download Captioning dataset
+
+nocaps
+<validation set, test set>
+~~~bash
+wget https://nocaps.s3.amazonaws.com/nocaps_val_4500_captions.json
+~~~
+Localized Narratives
+<train image set(10), validation image set , test image set, train caption set, validation caption set, test caption set >
+image data from open-images-dataset\
+https://github.com/cvdfoundation/open-images-dataset.git
 
 ~~~bash
-pip install git+https://github.com/Maluuba/nlg-eval.git@master
-nlg-eval --setup
+wget https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_captions.jsonl
+wget https://storage.googleapis.com/localized-narratives/annotations/open_images_validation_captions.jsonl
+wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
 ~~~
 
-### Detect objects in images
-
-~~~bash
-pip install timm
-~~~
-
-### Download image captioning datasets
-
-~~~bash
-cd captioning_data
-bash download.sh # please check download.sh file for the conceptual captions dataset
-~~~
+COCO-caption\
+https://github.com/tylin/coco-caption.git

@@ -25,6 +25,22 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
             torch.arange(self.prefix_len).unsqueeze(0).long(),
             torch.arange(self.prefix_len).unsqueeze(0).long()
         ]
+    
+    def prepare_inputs_for_generation(self,input_ids,
+                                      past=None, attention_mask=None,
+                                      use_cache=None, encoder_outputs=None,
+                                      **kwargs):
+        inputs_embeds = kwargs["inputs_embeds"]
+        if past is not None:
+            input_ids = input_ids[:, -1:]
+        return {"inputs_embeds": inputs_embeds,
+                "past_key_values": past,
+                "decoder_input_ids" : input_ids,
+                # "encoder_outputs": encoder_outputs,
+                "attention_mask": attention_mask,
+                "use_cache": use_cache,
+                "generate" : True
+                }
 
     def class_label_initialization(self, class_idx_A, class_idx_B):
         vec_A = self.shared(class_idx_A.unsqueeze(0))

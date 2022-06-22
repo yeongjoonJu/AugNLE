@@ -1,10 +1,9 @@
 import json, os, random
-from pyexpat import model
 from tqdm import tqdm
 from PIL import Image
 
 import torch
-from torch.utils.data import DataLoader, random_split, Dataset
+from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 
 from pytorch_lightning import LightningDataModule
@@ -15,13 +14,21 @@ import utils
 import logging
 logger = logging.getLogger(__name__)
 
-def random_data_choice(anno, num):
+def random_data_choice(anno, num, pseudo=False):
     fewshot_data = {}
+    # For pseudo labeling
+    pseudo_data = {}
+    
     img_ids = list(anno.keys())
     random.shuffle(img_ids)
-    img_ids = img_ids[:num]
-    for img_id in img_ids:
+    f_img_ids = img_ids[:num]
+    p_img_ids = img_ids[num:]
+    
+    for img_id in f_img_ids:
         fewshot_data[img_id] = anno[img_id]
+    if pseudo:
+        for img_id in p_img_ids:
+            pseudo_data[img_id] = anno[img_id]
     
     return fewshot_data
 
@@ -190,7 +197,7 @@ class BaseDataModule(LightningDataModule):
             return sample
 
         self.collate_fn = collate_wrapper
-
+        
     def train_dataloader(self):
         return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.cfg.train_batch_size, \
                         pin_memory=True, num_workers=self.cfg.n_train_workers, collate_fn=self.collate_fn)
@@ -198,16 +205,19 @@ class BaseDataModule(LightningDataModule):
     def val_dataloader(self):
         return DataLoader(self.dataset["valid"], shuffle=False, batch_size=self.cfg.train_batch_size, \
                         pin_memory=True, num_workers=self.cfg.n_valid_workers, collate_fn=self.collate_fn)
+        
+    def predict_dataloader(self):
+            return DataLoader(self.dataset["pseudo"], shuffle=False, batch_size= 1, \
+                            pin_memory=True, num_workers=self.cfg.n_valid_workers, collate_fn=self.collate_fn2)
 
-    def get_dataset(self, anno, mode):
+    def get_dataset(self, anno, is_train=False):
         raise NotImplementedError
 
 
 class VQAXDataModule(BaseDataModule):
     # Main >> [I] question: [Q] -> the answer is [A] because [E]
-    # T_e  >> because [E] -> question: [Q], the answer is [A]
+    # T_e  >> [I] question: [Q] answer: [A] -> because [E]
     # T_a  >> question: [Q] reason: [E] -> the answer is [A]
-    # mode: ["prompt_train", "prompt_valid", "adapt_train", "adapt_valid"]
 
     def get_dataset(self, anno, mode):
         cached_filename = f"vqax_shot-{self.fewshot_num}_{mode}_seed-{self.cfg.seed}.cache"
@@ -219,7 +229,7 @@ class VQAXDataModule(BaseDataModule):
         else:
             ids_list = list(anno.keys())
             index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
-            for k,v in anno.items():
+            for k,v in anno.items():   
                 if len(v['explanation']) > 1:   # some questions have more than one explanation 
                     ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
 
