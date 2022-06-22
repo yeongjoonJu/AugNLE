@@ -96,7 +96,7 @@ if __name__ == '__main__':
     data_args.add_argument('--valid_anno_path', type=str, default=None, help='Path to annotation for validation')
     data_args.add_argument("--fewshot_ratio", type=float, default=-1, help="Ratio of few-shot data")
     data_args.add_argument("--fewshot_num", type=int, default=500, help="The number of few-shot data")
-    data_args.add_argument("--cached_dir", type=str, default="cached/obj", help="Directory with cached file")
+    data_args.add_argument("--cached_dir", type=str, default="cached", help="Directory with cached file")
     data_args.add_argument("--n_train_workers", type=int, default=8)
     data_args.add_argument("--n_valid_workers", type=int, default=4)
     data_args.add_argument("--discrete_prompt", type=str, default="answer and explain: ")

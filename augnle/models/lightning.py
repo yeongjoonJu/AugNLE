@@ -28,6 +28,9 @@ class PromptTuning(LightningModule):
             self.adam_epsilon=  self.cfg.adam_epsilon
             self.warmup_steps=  self.cfg.warmup_steps
             self.weight_decay=  self.cfg.weight_decay
+        else:
+            self.use_prompt_A = True
+            self.use_prompt_B = False
 
         self.eos_token_id = tokenizer.eos_token_id
         
@@ -37,6 +40,16 @@ class PromptTuning(LightningModule):
         self.change_requires_grad(self.model, False)
         self.change_requires_grad(self.model.prefix_encoder_A, True)
         self.change_requires_grad(self.model.prefix_encoder_B, True)
+
+    def set_prompt_A(self):
+        # for inference
+        self.use_prompt_A = True
+        self.use_prompt_B = False
+
+    def set_prompt_B(self):
+        # for inference
+        self.use_prompt_A = False
+        self.use_prompt_B = True
     
     def class_label_initialization(self, class_idx_A, class_idx_B):
         class_idx_A = torch.LongTensor(class_idx_A)
@@ -86,7 +99,8 @@ class PromptTuning(LightningModule):
         encoder_outputs = self.model(input_ids=batch["enc_inputs"],
                                     attention_mask=batch["attn_mask"],
                                     return_dict=False,
-                                    prompting_A=True,
+                                    prompting_A=self.use_prompt_A,
+                                    prompting_B=self.use_prompt_B,
                                     encoder_only=True)
         if isinstance(encoder_outputs, tuple):
             last_hidden_state = encoder_outputs[0]
@@ -103,27 +117,49 @@ class PromptTuning(LightningModule):
         outputs = self.model.generate(encoder_outputs=encoder_outputs,
                                     attention_mask=batch["attn_mask"],
                                     eos_token_id=self.eos_token_id,
+                                    do_sample=(self.cfg.top_k is not None or self.cfg.top_p is not None),
                                     max_length=256,
+                                    num_return_sequences=self.cfg.num_return_sequences,
                                     early_stopping=True,
                                     temperature=self.cfg.temperature,
                                     top_k=self.cfg.top_k,
                                     top_p=self.cfg.top_p)
 
+        if self.cfg.num_return_sequences > 1:
+            outputs = outputs.view(outputs.shape[0]//self.cfg.num_return_sequences, self.cfg.num_return_sequences, -1)
+
         outputs = outputs.cpu().numpy().tolist()
-        explanations = batch["enc_inputs"].cpu().numpy().tolist()
-        gt_qas = batch["labels"].cpu().numpy().tolist()
+        
+        inputs = batch["enc_inputs"].cpu().numpy().tolist()
+        labels = None
+        if "labels" in batch:
+            labels = batch["labels"].cpu().numpy().tolist()
         decodeds = []
         for n, out in enumerate(outputs):
-            exp = explanations[n]
-            gt_qa = gt_qas[n]
-            out = out[1:out.index(self.eos_token_id)]
-            exp = exp[:exp.index(self.eos_token_id)]
-            gt_qa = gt_qa[:gt_qa.index(self.eos_token_id)]
-            decoded_sample = self.tokenizer.decode(out, clean_up_tokenization_spaces=True)
-            decoded_exp = self.tokenizer.decode(exp, clean_up_tokenization_spaces=True)
-            decoded_gt_qa = self.tokenizer.decode(gt_qa, clean_up_tokenization_spaces=True)
+            inp = inputs[n]
+            inp = inp[:inp.index(self.eos_token_id)]
+            decoded_inp = self.tokenizer.decode(inp, clean_up_tokenization_spaces=True)
+            if self.cfg.num_return_sequences > 1:
+                decoded_out = []
+                for sample in out:
+                    sample = sample[1:sample.index(self.eos_token_id)]
+                    sample = self.tokenizer.decode(sample, clean_up_tokenization_spaces=True)
+                    if not sample in decoded_out:
+                        decoded_out.append(sample)
+            else:
+                out = out[1:out.index(self.eos_token_id)]
+                decoded_out = self.tokenizer.decode(out, clean_up_tokenization_spaces=True)
             
-            decodeds.append({"input":decoded_exp, "output":decoded_sample, "GT":decoded_gt_qa})
+            if labels is not None:
+                label = labels[n]
+                label = label[:label.index(self.eos_token_id)]
+                decoded_label = self.tokenizer.decode(label, clean_up_tokenization_spaces=True)
+            
+            decoded = {"input":decoded_inp, "output":decoded_out}
+            if labels is not None:
+                decoded.update({"label": decoded_label})
+
+            decodeds.append(decoded)
         
         return decodeds
 

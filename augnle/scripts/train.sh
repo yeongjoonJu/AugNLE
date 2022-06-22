@@ -4,7 +4,7 @@ CKPT_DIR="./ckpts"
 # --weight_decay 0.04 \
 
 CUDA_VISIBLE_DEVICES=0,1,2 python tune.py \
---experiment_name sep_prompt_adaf_b18_lr0.3_obj2_ci_no_proj_ep20 \
+--experiment_name adaf_b18_lr0.3_ci_ep20_obj4 \
 --max_epochs 20 \
 --ngpu 3 \
 --warmup_steps 0 \

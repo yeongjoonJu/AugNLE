@@ -1,0 +1,2887 @@
+[
+  {
+    "input": "is this a recent photo? reason: because the same snowboarder is present many times",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has black and white fur on it",
+    "output": "the answer is fox",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is big and has brown and black fur",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "is it daytime? reason: because the street is empty of people",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what room is this? reason: because there are a lot of wine glasses filled with wine",
+    "output": "the answer is kitchen",
+    "label": "the answer is dining room"
+  },
+  {
+    "input": "is the man walking in the right direction? reason: because the path is shifting more to the right",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a zoo? reason: because there are many people have a great time on the field behind the dinosaur",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of button is on the mouse? reason: because it is a round button with a line in the middle",
+    "output": "the answer is left",
+    "label": "the answer is arrow"
+  },
+  {
+    "input": "what kind of button is on the mouse? reason: because it is a round button with a line in the middle",
+    "output": "the answer is left",
+    "label": "the answer is delete"
+  },
+  {
+    "input": "what type of button is on the mouse? reason: because it is a round button with a line in the middle",
+    "output": "the answer is left",
+    "label": "the answer is right click"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is black and white with a short tail",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "is this a conference? reason: because the man are gathered on a grass field with a laptop",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the planes name? reason: because it is written on the side of the airplane",
+    "output": "the answer is a380",
+    "label": "the answer is aermacchi"
+  },
+  {
+    "input": "what is the planes name? reason: because it is written on the side of the airplane",
+    "output": "the answer is a380",
+    "label": "the answer is eagle"
+  },
+  {
+    "input": "is it night time? reason: because the street light is on",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is it night time? reason: because the moon is not in the sky",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the girl doing something fun? reason: because she is fixing her friends line up",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the girl a fashion designer? reason: because she is fixing her friends line up",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the man have a big umbrella? reason: because the umbrella is too big and heavy for him",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a passenger train? reason: because the seats are very narrowly placed inside of a rail car",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of wall is this? reason: because the wall and rocks around it are greyish brown just like the animal",
+    "output": "the answer is rock",
+    "label": "the answer is sand"
+  },
+  {
+    "input": "what is the mans surfboard made of? reason: because it looks water resistant and sheen",
+    "output": "the answer is plastic",
+    "label": "the answer is fiberglass"
+  },
+  {
+    "input": "what is the surfboard made of? reason: because it looks water resistant and sheen",
+    "output": "the answer is plastic",
+    "label": "the answer is fiberglass"
+  },
+  {
+    "input": "what event is this? reason: because they are wearing special garb",
+    "output": "the answer is wedding",
+    "label": "the answer is horse show"
+  },
+  {
+    "input": "what are the people doing? reason: because they are wearing special garb",
+    "output": "the answer is skiing",
+    "label": "the answer is riding horses"
+  },
+  {
+    "input": "what kind of animal is this? reason: because because it has two round ears and a snout",
+    "output": "the answer is dog",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what is the person sitting on? reason: because their bottom is on the floor",
+    "output": "the answer is floor",
+    "label": "the answer is bed"
+  },
+  {
+    "input": "is this a birthday party? reason: because her cake features medical supplies",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this person have on a bathing suit? reason: because they are wearing skin tight clothing",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man riding? reason: because it has two tires and pedals",
+    "output": "the answer is bike",
+    "label": "the answer is bicycle"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's a large, domestic animal with big ears",
+    "output": "the answer is dog",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what kind of shoes is the man wearing? reason: because they are long and painted",
+    "output": "the answer is boots",
+    "label": "the answer is sneakers"
+  },
+  {
+    "input": "what kind of shoes is the man wearing? reason: because they are long and painted",
+    "output": "the answer is boots",
+    "label": "the answer is sandals"
+  },
+  {
+    "input": "does this pizza look good? reason: because there is shinny grease on top of the pizza",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a real bear? reason: because it is the bigger version of a teddy bear which is based off a real bear",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's a large, round animal with round ears",
+    "output": "the answer is elephant",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what are the people doing? reason: because they are holding a kite string",
+    "output": "the answer is flying kite",
+    "label": "the answer is flying kites"
+  },
+  {
+    "input": "is the grass mowed? reason: because lush, green grass is alongside the sidewalk",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a long, slender muzzle and a thick coat of curly black fur",
+    "output": "the answer is fox",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "does the elephant have a tan? reason: because there are different colors on his face",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the giraffe have its mouth open? reason: because its bottom lip is rolled up",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the cows doing? reason: because they are on either side of the fence and standing on the road",
+    "output": "the answer is standing",
+    "label": "the answer is walking"
+  },
+  {
+    "input": "what kind of food is this? reason: because they are small oblong granules",
+    "output": "the answer is cereal",
+    "label": "the answer is rice"
+  },
+  {
+    "input": "does the dog like the cat? reason: because normally dogs chase and frighten cats",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he is wearing two blades attached to his feet and going down a snowy slope",
+    "output": "the answer is skiing",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what is the man riding? reason: because is it oblong in shape and is a board",
+    "output": "the answer is skateboard",
+    "label": "the answer is snowboard"
+  },
+  {
+    "input": "what is the bus going to? reason: because the sign on the front of the bus indicates that is the destination",
+    "output": "the answer is san francisco",
+    "label": "the answer is nyc"
+  },
+  {
+    "input": "is the woman looking at the camera? reason: because she is looking down the street holding her starbucks",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is looking down the street holding her starbucks",
+    "output": "the answer is walking",
+    "label": "the answer is drinking coffee"
+  },
+  {
+    "input": "does the elephant have a hat? reason: because it is a solid blue color",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the tv flat screen? reason: because it is very thin and mounted to the wall",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the tv a flat screen? reason: because it is very thin and mounted to the wall",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a new bathroom? reason: because the bathroom is being remodeled",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the bus number? reason: because the bus number is displayed on the middle front of the bus",
+    "output": "the answer is 123",
+    "label": "the answer is 92"
+  },
+  {
+    "input": "what is the bus number? reason: because the bus number is displayed on the middle front of the bus",
+    "output": "the answer is 123",
+    "label": "the answer is 301"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has brown fur, floppy ears, a long snout, and is laying on a bed",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what is the man doing? reason: because he is holding a bear in his hands",
+    "output": "the answer is playing with bear",
+    "label": "the answer is playing"
+  },
+  {
+    "input": "is this a professional event? reason: because there are several spectators present",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the cow doing? reason: because the other animals present are also doing it",
+    "output": "the answer is eating",
+    "label": "the answer is calving"
+  },
+  {
+    "input": "what is the cow doing? reason: because the other animals present are also doing it",
+    "output": "the answer is eating",
+    "label": "the answer is grazing"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has very puffy fur and a pointy nose",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "is this a home office? reason: because there is equipment and full file organizer",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal has large curved horns that wrap around almost to it's neck",
+    "output": "the answer is cow",
+    "label": "the answer is sheep"
+  },
+  {
+    "input": "is this a professional tennis match? reason: because the man is on a green court",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this man have a garbage disposal? reason: because he has multiple refuse containers in his kitchen",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what sport is this? reason: because the man is hitting a yellow ball",
+    "output": "the answer is baseball",
+    "label": "the answer is tennis"
+  },
+  {
+    "input": "is this a wedding? reason: because themen are dressed in suits and one has a name tag",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what team is this? reason: because the word texas is written across their uniforms",
+    "output": "the answer is texans",
+    "label": "the answer is texas"
+  },
+  {
+    "input": "does the cat look like it is having fun? reason: because it is just relaxing on the couch",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what room is this? reason: because there a many clocks hanging on the walls",
+    "output": "the answer is living room",
+    "label": "the answer is clock room"
+  },
+  {
+    "input": "what room is this? reason: because there a many clocks hanging on the walls",
+    "output": "the answer is living room",
+    "label": "the answer is office"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a large beak and is on the beach",
+    "output": "the answer is seagull",
+    "label": "the answer is egret"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a large beak and is on the beach",
+    "output": "the answer is seagull",
+    "label": "the answer is gull"
+  },
+  {
+    "input": "is this a fresh fruit? reason: because the bananas are not ripe",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what company is this? reason: because the logo is in the shape of an l",
+    "output": "the answer is lego",
+    "label": "the answer is lincoln"
+  },
+  {
+    "input": "what brand of meter is this? reason: because the logo is in the shape of an l",
+    "output": "the answer is lg",
+    "label": "the answer is lincoln"
+  },
+  {
+    "input": "is the dog swimming? reason: because his head is just above water in a lake",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what type of plane is this? reason: because there is a propeller on each side",
+    "output": "the answer is helicopter",
+    "label": "the answer is airplane"
+  },
+  {
+    "input": "is this a gas stove? reason: because the range has coil burners on it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the elephant standing? reason: because the elephant has one of it's leg in front of the others",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a family? reason: because everybody is focused on the video game",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a family game night? reason: because everybody is focused on the video game",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of book is this? reason: because the item has a front cover, and appears to have pages beneath it",
+    "output": "the answer is book",
+    "label": "the answer is hardback"
+  },
+  {
+    "input": "what kind of animals are these? reason: because they have horns and they have a lot of fur",
+    "output": "the answer is cows",
+    "label": "the answer is sheep"
+  },
+  {
+    "input": "does the horse have a horn? reason: because it has lots of hair on it hoof area",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of utensils are on the table? reason: because they are pots and pans",
+    "output": "the answer is cooking",
+    "label": "the answer is pots and pans"
+  },
+  {
+    "input": "what is the man doing? reason: because he is sitting on top of a horse that is moving",
+    "output": "the answer is riding horse",
+    "label": "the answer is riding"
+  },
+  {
+    "input": "what is the toothbrush used for? reason: because there is blue toothpaste coming out the end",
+    "output": "the answer is brushing teeth",
+    "label": "the answer is toothpaste"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is a dog with a long body",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "is it raining? reason: because there is wet snow and ice on the ground",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the water busy? reason: because every boat is tied to the dock",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a skateboard? reason: because skateboards do not have motors",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the wall have a picture on it? reason: because it is very broken and barely staying on the wall",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the light green? reason: because it says only to go in one direction",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is a medium size pet with a tail, ears and four paws",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is sitting inside and has big ears",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what company is this? reason: because the logo is of said company",
+    "output": "the answer is t-mobile",
+    "label": "the answer is apple"
+  },
+  {
+    "input": "is the man playing in a park? reason: because he is standing on a field with no one around",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel room? reason: because there are no windows and no locks on the door",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because they are orange and round",
+    "output": "the answer is orange",
+    "label": "the answer is oranges"
+  },
+  {
+    "input": "does the sink need to be cleaned? reason: because it is sparkling white with no dirty spots",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the giraffe in the photo a threat? reason: because the animal with the long neck approaches the man",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the giraffe chasing the man? reason: because the animal with the long neck approaches the man",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of food is this? reason: because there is sausage and lots of bread on the plate",
+    "output": "the answer is pizza",
+    "label": "the answer is hot dog"
+  },
+  {
+    "input": "is the bus going to the right or left? reason: because there is a sign on the bus with the destination crosstown",
+    "output": "the answer is left",
+    "label": "the answer is right"
+  },
+  {
+    "input": "is the dog swimming? reason: because his bottom is on the surface of the boat",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he has his hands on the handlebar of a motorcycle",
+    "output": "the answer is riding motorcycle",
+    "label": "the answer is riding bike"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because there is a bunch of them in a basket on the right",
+    "output": "the answer is banana",
+    "label": "the answer is apples"
+  },
+  {
+    "input": "does the toilet have a chrome finish? reason: because it is painted silver to add a nice look",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are cutting a birthday cake",
+    "output": "the answer is eating",
+    "label": "the answer is cutting cake"
+  },
+  {
+    "input": "is the dog moving? reason: because the traffic light is green",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this man a celebrity? reason: because he is the president of the united states",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it is a white bird on the beach",
+    "output": "the answer is seagull",
+    "label": "the answer is egret"
+  },
+  {
+    "input": "what kind of wine is being served? reason: because it is in a green bottle with a long neck",
+    "output": "the answer is chardonnay",
+    "label": "the answer is merlot"
+  },
+  {
+    "input": "what kind of wine is this? reason: because it is in a green bottle with a long neck",
+    "output": "the answer is chardonnay",
+    "label": "the answer is merlot"
+  },
+  {
+    "input": "what kind of wine is this? reason: because it is in a green bottle with a long neck",
+    "output": "the answer is chardonnay",
+    "label": "the answer is champagne"
+  },
+  {
+    "input": "is this a healthy breakfast? reason: because there are fruits and yogurt upside down",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what type of place is this? reason: because it has concrete surfaces and there is a skateboarder jumping in it",
+    "output": "the answer is skate park",
+    "label": "the answer is park"
+  },
+  {
+    "input": "what kind of furniture is this? reason: because it has a seat and support for the back",
+    "output": "the answer is chair",
+    "label": "the answer is bench"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a long, thin bill",
+    "output": "the answer is egret",
+    "label": "the answer is eagle"
+  },
+  {
+    "input": "is this a healthy dessert? reason: because it's a birthday cake and it is made with edible frosting pieces",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a healthy food? reason: because it's a birthday cake and it is made with edible frosting pieces",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the cat sleeping? reason: because she is just lying on the bed",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what sport is this? reason: because the player is wearing a uniform and running on the dirt path",
+    "output": "the answer is soccer",
+    "label": "the answer is baseball"
+  },
+  {
+    "input": "what kind of cake is this? reason: because it is stout and has sprinkles on top",
+    "output": "the answer is donut",
+    "label": "the answer is cupcake"
+  },
+  {
+    "input": "what kind of beverage is the man drinking? reason: because it is green can with green and red writing",
+    "output": "the answer is beer",
+    "label": "the answer is soda"
+  },
+  {
+    "input": "what kind of beverage is this? reason: because it is green can with green and red writing",
+    "output": "the answer is beer",
+    "label": "the answer is soda"
+  },
+  {
+    "input": "is the bus moving? reason: because the light is red, there is moving traffic in front of it which could cause a horrible accident",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of dog is this? reason: because it is golden colored and big",
+    "output": "the answer is chihuahua",
+    "label": "the answer is golden retriever"
+  },
+  {
+    "input": "what are the people doing? reason: because they are in the ocean in wet suits",
+    "output": "the answer is swimming",
+    "label": "the answer is surfing"
+  },
+  {
+    "input": "does this plane have a tail air intake? reason: because there is one large air intake on both wings",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a safe area? reason: because the traffic lights are red and are for a person's safety",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is very large and is in a pen",
+    "output": "the answer is giraffe",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what kind of sauce is on the plate? reason: because it is red and liquid in consistency",
+    "output": "the answer is tomato",
+    "label": "the answer is mayonnaise"
+  },
+  {
+    "input": "what kind of food is this? reason: because it is several fried doughnuts on a stick",
+    "output": "the answer is donut",
+    "label": "the answer is donuts"
+  },
+  {
+    "input": "does the clock have a bell? reason: because they were temporary decorations",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the clock have a face? reason: because they were temporary decorations",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the bear doing? reason: because there is a mallet like object in its hands",
+    "output": "the answer is hitting",
+    "label": "the answer is swinging hammer"
+  },
+  {
+    "input": "is this in the desert? reason: because you can see the mountains",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the cat have a snout? reason: because its ears look like triangles",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of hair is the man wearing? reason: because it is fuzzy, brown, and soft",
+    "output": "the answer is beard",
+    "label": "the answer is fur"
+  },
+  {
+    "input": "what kind of hair is on the man? reason: because it is fuzzy, brown, and soft",
+    "output": "the answer is curly",
+    "label": "the answer is sheep"
+  },
+  {
+    "input": "does the bear have a teddy bear? reason: because there are green and blue lines",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a restaurant? reason: because there are too many people around round tables",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the motorcycle parked? reason: because it is standing up by itself",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the horse doing? reason: because it has one foot in front of the other and one foot is off the ground",
+    "output": "the answer is walking",
+    "label": "the answer is jumping"
+  },
+  {
+    "input": "is this a race? reason: because the motorcycles have sponsors on them",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is round with gray spots",
+    "output": "the answer is giraffe",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "does the horse have a water bottle? reason: because its face is in a fountain",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are being pulled across the lake",
+    "output": "the answer is boating",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "what kind of pizza is this? reason: because the box on his table is a large square with pictures on it",
+    "output": "the answer is pepperoni",
+    "label": "the answer is square"
+  },
+  {
+    "input": "what is the person doing? reason: because they are working on a piece of art",
+    "output": "the answer is drawing",
+    "label": "the answer is painting"
+  },
+  {
+    "input": "is the cat licking its bowl? reason: because it is just eating its food",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the cat happy? reason: because it is just eating its food",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the paper plate shiny? reason: because it is shiny and paper is not shiny",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a wedding? reason: because the man is wearing a suit and the women are wearing dresses",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's in the form of the animal",
+    "output": "the answer is bear",
+    "label": "the answer is lion"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's in the form of the animal",
+    "output": "the answer is bear",
+    "label": "the answer is zebra"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because it's in the form of the animal",
+    "output": "the answer is banana",
+    "label": "the answer is orange"
+  },
+  {
+    "input": "what kind of dog is this? reason: because it is red and white colored",
+    "output": "the answer is chihuahua",
+    "label": "the answer is poodle"
+  },
+  {
+    "input": "is this a healthy meal? reason: because it is made with milk and cheese",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is wearing a wedding dress and holding a bouqet",
+    "output": "the answer is getting ready for wedding",
+    "label": "the answer is getting married"
+  },
+  {
+    "input": "what kind of beverage is this? reason: because it is foamy on top and light brown",
+    "output": "the answer is beer",
+    "label": "the answer is coffee"
+  },
+  {
+    "input": "is this a hotel room? reason: because the puppy is sitting on the bed",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because they are yellow curved fruits",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "is this a home office? reason: because there is a desk with many computers on it",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the woman have her left hand on the table? reason: because that is her dominant hand and it is on the right side of her body",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the person in the car moving? reason: because they are headed across the street",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a stop sign? reason: because they are headed across the street",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the bike moving? reason: because the car is blurry which means it is traveling at a higher speed than the bike",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a dance party? reason: because a man is dancing in front of a television",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because batches of yellow bananas are visible",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "is this a nyc bus? reason: because there are many apple products on the side of it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this bus have a logo on it? reason: because there are many apple products on the side of it",
+    "output": "the answer is yes",
+    "label": "the answer is apple"
+  },
+  {
+    "input": "what is the woman doing? reason: because she has both hands on the handlebars",
+    "output": "the answer is riding motorcycle",
+    "label": "the answer is riding bike"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is repairing a damaged board",
+    "output": "the answer is skateboarding",
+    "label": "the answer is surfing"
+  },
+  {
+    "input": "is it raining? reason: because it's an overcast and cloudy day",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the child sitting on? reason: because it is a flat raised surface that is waist-height to the children",
+    "output": "the answer is bench",
+    "label": "the answer is table"
+  },
+  {
+    "input": "what type of vehicle is this? reason: because it has two wheels",
+    "output": "the answer is motorcycle",
+    "label": "the answer is bike"
+  },
+  {
+    "input": "is this a farm? reason: because the sign describes ecological development",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a water hydrant? reason: because it is a fire hydrant",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man sitting on? reason: because the building is constructed of this material",
+    "output": "the answer is brick",
+    "label": "the answer is concrete"
+  },
+  {
+    "input": "what kind of building is this? reason: because the building is constructed of this material",
+    "output": "the answer is brick",
+    "label": "the answer is office"
+  },
+  {
+    "input": "does the dog have shoes on? reason: because its feet are covered in pink socks",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what are the giraffes doing? reason: because their necks and heads are hovering above the trees",
+    "output": "the answer is walking",
+    "label": "the answer is standing"
+  },
+  {
+    "input": "what is the man doing? reason: because he is holding hi luggage in his hand",
+    "output": "the answer is walking",
+    "label": "the answer is traveling"
+  },
+  {
+    "input": "what kind of flowers are in the vase? reason: because they are yellow and red with petals shaped in an oval",
+    "output": "the answer is sunflowers",
+    "label": "the answer is roses"
+  },
+  {
+    "input": "is this a vegetarian meal? reason: because i can see rice underneath the meat and next to the vegetables",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man standing on? reason: because there are squares painted on the ground",
+    "output": "the answer is tile",
+    "label": "the answer is pavement"
+  },
+  {
+    "input": "is the stop sign in motion? reason: because the stop sign is no longer red",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he is sitting perched on top of a horse",
+    "output": "the answer is riding horse",
+    "label": "the answer is riding"
+  },
+  {
+    "input": "what room is this? reason: because they are at a long table and the child is doing a puzzle on it",
+    "output": "the answer is living room",
+    "label": "the answer is dining room"
+  },
+  {
+    "input": "is this a party? reason: because a bunch of cups are filled with very little amounts of wine",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man holding? reason: because it is fabric shaped in a triangle",
+    "output": "the answer is triangle",
+    "label": "the answer is kite"
+  },
+  {
+    "input": "what event is this? reason: because beautiful kits are flying in the sky at the event",
+    "output": "the answer is kite flying",
+    "label": "the answer is kite festival"
+  },
+  {
+    "input": "what sport is this? reason: because beautiful kits are flying in the sky at the event",
+    "output": "the answer is kiteboarding",
+    "label": "the answer is kite flying"
+  },
+  {
+    "input": "is it daytime? reason: because the boys are doing skate tricks outside shops that appear to be closed",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a new sign? reason: because the words are written in spray paint",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what brand of computer is this? reason: because it has the usual power logo",
+    "output": "the answer is power",
+    "label": "the answer is powerpoint"
+  },
+  {
+    "input": "what is the mouse button for? reason: because it's a large button with a circle on it",
+    "output": "the answer is click",
+    "label": "the answer is play"
+  },
+  {
+    "input": "what is the mouse button for? reason: because it's a large button with a circle on it",
+    "output": "the answer is click",
+    "label": "the answer is start"
+  },
+  {
+    "input": "what is the mouse button? reason: because it's a large button with a circle on it",
+    "output": "the answer is left",
+    "label": "the answer is button"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is a small, furry animal with four legs",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of animal is this? reason: because he is black, furry, and has four legs",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of blades are on the motorcycle? reason: because the blades are pointed upwards and they are green",
+    "output": "the answer is chopper",
+    "label": "the answer is blades"
+  },
+  {
+    "input": "what kind of blades are on the motorcycle? reason: because the blades are pointed upwards and they are green",
+    "output": "the answer is chopper",
+    "label": "the answer is propeller"
+  },
+  {
+    "input": "what airline is this? reason: because the word is on the side of the plane",
+    "output": "the answer is delta",
+    "label": "the answer is american"
+  },
+  {
+    "input": "what airline is this? reason: because the word is on the side of the plane",
+    "output": "the answer is delta",
+    "label": "the answer is united"
+  },
+  {
+    "input": "what are the people drinking? reason: because the all have glasses of champagne",
+    "output": "the answer is wine",
+    "label": "the answer is champagne"
+  },
+  {
+    "input": "is the toilet painted white? reason: because the toilet is white, while the wall is olive green",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what train is this? reason: because the train has a sign calling it 702 on the front",
+    "output": "the answer is 702",
+    "label": "the answer is nyc"
+  },
+  {
+    "input": "does the man have a helmet on? reason: because he may poke his eye out",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a residential area? reason: because there is an electrical cable in the background",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people drinking? reason: because they are drinking orange juice",
+    "output": "the answer is orange juice",
+    "label": "the answer is juice"
+  },
+  {
+    "input": "is this a modern plate? reason: because the plate is made of white ceramic or bakelite,",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man sitting? reason: because his rear is touching the floor",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man sitting on the ground? reason: because he needs to be near the plug to work on his laptop",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the man doing? reason: because he is preparing to go surfing",
+    "output": "the answer is surfing",
+    "label": "the answer is putting on wetsuit"
+  },
+  {
+    "input": "what kind of vehicle is this? reason: because it is large and long with tinted windows",
+    "output": "the answer is truck",
+    "label": "the answer is bus"
+  },
+  {
+    "input": "does the man have a hat? reason: because there feet are covered and the covering goes up there thigh",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a brown nose and little ears",
+    "output": "the answer is dog",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is fluffy with round ears",
+    "output": "the answer is cat",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "is the horse grazing? reason: because all of its feet are of the ground",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he is riding a motorcycle",
+    "output": "the answer is riding motorcycle",
+    "label": "the answer is riding bike"
+  },
+  {
+    "input": "what kind of pizza is this? reason: because it is white and thin with rippled edges",
+    "output": "the answer is white",
+    "label": "the answer is thin crust"
+  },
+  {
+    "input": "is this a train station? reason: because there seem to be lines above the street that are used in a street car system",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a birthday cake? reason: because the cake has decorations of a band aid, syringe and medication",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of food is this? reason: because it is layered and stacked tall on a plate",
+    "output": "the answer is pizza",
+    "label": "the answer is cake"
+  },
+  {
+    "input": "what kind of event is this? reason: because a beautifully decorated cake has flowers arraigned around it",
+    "output": "the answer is wedding",
+    "label": "the answer is birthday"
+  },
+  {
+    "input": "what type of event is this? reason: because a beautifully decorated cake has flowers arraigned around it",
+    "output": "the answer is wedding",
+    "label": "the answer is birthday"
+  },
+  {
+    "input": "does the woman have a long sleeved shirt? reason: because you can see the women's whole arm",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the cat look happy? reason: because he is sleeping and cozy in his bed",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has big ears and a ring in its nose",
+    "output": "the answer is dog",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what day is this? reason: because it is national go skate boarding day in the city",
+    "output": "the answer is saturday",
+    "label": "the answer is skateboarding"
+  },
+  {
+    "input": "what day is this? reason: because it is national go skate boarding day in the city",
+    "output": "the answer is saturday",
+    "label": "the answer is go skate boarding"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because they are mostly yellow with some brown spots",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "what is the pizza made of? reason: because it has a very shiny surface",
+    "output": "the answer is metal",
+    "label": "the answer is aluminum"
+  },
+  {
+    "input": "what sport is this? reason: because you travel downhill very fast and can get hurt",
+    "output": "the answer is snowboarding",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "is the bench new? reason: because it is still coated in green paint",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the kite flying? reason: because one person is holding onto the string",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what game is being played? reason: because there is a hocky game shown on the screen",
+    "output": "the answer is wii",
+    "label": "the answer is hocky"
+  },
+  {
+    "input": "what game is on the tv? reason: because there is a hocky game shown on the screen",
+    "output": "the answer is wii",
+    "label": "the answer is hocky"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has black curly hair and a black nose",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of dog is this? reason: because the dog has a long snout and its hair is curly",
+    "output": "the answer is dachshund",
+    "label": "the answer is poodle"
+  },
+  {
+    "input": "what is the man doing? reason: because he is surfing on a skiing resort",
+    "output": "the answer is surfing",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "is this a professional game? reason: because the outfield has a sign that says world series",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does this animal have a right of way? reason: because they are walking in the middle of the street",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this cows have a right of way? reason: because they are walking in the middle of the street",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this look like a farm? reason: because they are roaming all over the road",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a commercial vehicle? reason: because it is a huge truck pulled up to a house with a trailer behind it to pull the owners car",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the train moving? reason: because people are seated on the other side of the windows",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of store is this? reason: because the sign on the wall says, kia motors",
+    "output": "the answer is car",
+    "label": "the answer is kia"
+  },
+  {
+    "input": "what kind of rice is this? reason: because it is a white looking grain",
+    "output": "the answer is white",
+    "label": "the answer is quinoa"
+  },
+  {
+    "input": "is this a saxophone free zone? reason: because the street sign says \"no saxophones\"",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a saxophone zone? reason: because the street sign says \"no saxophones\"",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of music is being played? reason: because the sign has a red cross over a saxophone",
+    "output": "the answer is jazz",
+    "label": "the answer is sax"
+  },
+  {
+    "input": "what sport is this? reason: because the man in white is waiting to swat a ball",
+    "output": "the answer is baseball",
+    "label": "the answer is tennis"
+  },
+  {
+    "input": "is the woman breathing? reason: because she is wearing an oxygen tube",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he is going down a snow covered mountain",
+    "output": "the answer is skiing",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what kind of fur is this? reason: because it is light brown with darker stripes",
+    "output": "the answer is tiger",
+    "label": "the answer is fur"
+  },
+  {
+    "input": "what kind of fur is on the cat? reason: because it is light brown with darker stripes",
+    "output": "the answer is tan",
+    "label": "the answer is fur"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's a large bird with a sharp beak",
+    "output": "the answer is bird",
+    "label": "the answer is eagle"
+  },
+  {
+    "input": "what is the person riding? reason: because it is long and rectangular and sitting on top of a snowy hill",
+    "output": "the answer is ski",
+    "label": "the answer is snowboard"
+  },
+  {
+    "input": "is the plate a tin plate? reason: because the plate is all white and very thin",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel room? reason: because hotel rooms contain more than one bed",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is large and grey",
+    "output": "the answer is bear",
+    "label": "the answer is elephant"
+  },
+  {
+    "input": "what are the people doing? reason: because they can topple over in deep water",
+    "output": "the answer is swimming",
+    "label": "the answer is surfing"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is large and dark in color, with a long snout and tail",
+    "output": "the answer is bear",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what kind of trees are in the background? reason: because they have ropes to hang items on",
+    "output": "the answer is palm",
+    "label": "the answer is trellis"
+  },
+  {
+    "input": "what kind of plants are in the picture? reason: because they have ropes to hang items on",
+    "output": "the answer is vines",
+    "label": "the answer is hanging baskets"
+  },
+  {
+    "input": "does the train have a name? reason: because it's in graffiti style form",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a modern picture? reason: because there is a huge cricket phone",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal is brown with four legs",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what type of furniture is this? reason: because it is a futon which folds down to a bed",
+    "output": "the answer is futon",
+    "label": "the answer is couch"
+  },
+  {
+    "input": "is this a lake? reason: because this is a small pond, you can see the other shoreline close by",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "where was this picture taken? reason: because there is a baseball diamond in the background",
+    "output": "the answer is park",
+    "label": "the answer is baseball stadium"
+  },
+  {
+    "input": "is the sky clear? reason: because clouds are not casting any shadows",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man doing? reason: because he is on a smooth board",
+    "output": "the answer is skateboarding",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what sport are they playing? reason: because they are practicing on a field",
+    "output": "the answer is baseball",
+    "label": "the answer is soccer"
+  },
+  {
+    "input": "what brand of motorcycle is this? reason: because the logo is on the vehicle",
+    "output": "the answer is yamaha",
+    "label": "the answer is honda"
+  },
+  {
+    "input": "is this a zoo? reason: because the giraffe is standing inside of a building",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a hotel? reason: because the people are at a luggage carousel",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it's a large, round animal with round ears",
+    "output": "the answer is elephant",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what is the dog doing? reason: because the dog's back leg is moving, and it's feet are apart as it moves forward",
+    "output": "the answer is walking",
+    "label": "the answer is running"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a fluffy tiny little tail, is brown and has ears and a long brown nose",
+    "output": "the answer is cat",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what kind of room is this? reason: because it has a monitor, keyboard and mouse",
+    "output": "the answer is office",
+    "label": "the answer is computer"
+  },
+  {
+    "input": "is the toilet flushed? reason: because the toilet bowl is covered so you can't see the water in it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the dog have long hair? reason: because it has soft puffy balls of hair",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the woman eating with her right hand? reason: because since she is facing the camera, her left hand - which is holding the fork - is on the right-hand side of the image",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a home office? reason: because there are office supplies on the desk",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal has bulging eyes, is furry, and has large, curving, horns",
+    "output": "the answer is cow",
+    "label": "the answer is sheep"
+  },
+  {
+    "input": "what is the knife made of? reason: because it is a hard white material",
+    "output": "the answer is wood",
+    "label": "the answer is stainless steel"
+  },
+  {
+    "input": "what is the knife made of? reason: because it is a hard white material",
+    "output": "the answer is wood",
+    "label": "the answer is plastic"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is big and walking on all fours",
+    "output": "the answer is bear",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has four legs and small ears",
+    "output": "the answer is dog",
+    "label": "the answer is sheep"
+  },
+  {
+    "input": "what type of shoes are the people wearing? reason: because their feet are covered with straps and a shoe sole",
+    "output": "the answer is sandals",
+    "label": "the answer is shoes"
+  },
+  {
+    "input": "what is the couch made of? reason: because there is no wood in it",
+    "output": "the answer is leather",
+    "label": "the answer is plastic"
+  },
+  {
+    "input": "what kind of fries are in the bowl? reason: because they are thin and made of potatoes and fried",
+    "output": "the answer is french",
+    "label": "the answer is french fries"
+  },
+  {
+    "input": "what kind of fries are on the plate? reason: because they are thin and made of potatoes and fried",
+    "output": "the answer is french",
+    "label": "the answer is french fries"
+  },
+  {
+    "input": "what kind of food is this? reason: because there is bread and meat and toppings in the middle",
+    "output": "the answer is pizza",
+    "label": "the answer is sandwich"
+  },
+  {
+    "input": "what holiday is this? reason: because people are celebrating with fancy kites",
+    "output": "the answer is valentine's day",
+    "label": "the answer is 4th of july"
+  },
+  {
+    "input": "what holiday is this? reason: because people are celebrating with fancy kites",
+    "output": "the answer is valentine's day",
+    "label": "the answer is valentines day"
+  },
+  {
+    "input": "what sport is this? reason: because the player is swinging a bat",
+    "output": "the answer is baseball",
+    "label": "the answer is tennis"
+  },
+  {
+    "input": "what is the plate made of? reason: because it is a shiny ceramic material",
+    "output": "the answer is ceramic",
+    "label": "the answer is china"
+  },
+  {
+    "input": "what team is this? reason: because the jersey has the word texas on it",
+    "output": "the answer is texans",
+    "label": "the answer is texas"
+  },
+  {
+    "input": "what kind of flowers are in the vase? reason: because they have colorful blooms on the flowers",
+    "output": "the answer is roses",
+    "label": "the answer is flowers"
+  },
+  {
+    "input": "what kind of flowers are in the vase? reason: because they have petals and are many colors",
+    "output": "the answer is roses",
+    "label": "the answer is flowers"
+  },
+  {
+    "input": "what is the man doing? reason: because he is racing down the mountain",
+    "output": "the answer is snowboarding",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "what kind of beverage is in the cup? reason: because it is colored like orange juice",
+    "output": "the answer is orange juice",
+    "label": "the answer is orange"
+  },
+  {
+    "input": "is this a home office? reason: because there are computers and printers set up",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the man doing? reason: because he is jumping off a ramp on a board",
+    "output": "the answer is skateboarding",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what kind of store is this? reason: because there are a lot of clocks in the shop",
+    "output": "the answer is clock",
+    "label": "the answer is clocks"
+  },
+  {
+    "input": "what room is this? reason: because there are a lot of clocks on the wall",
+    "output": "the answer is living room",
+    "label": "the answer is clock room"
+  },
+  {
+    "input": "what is the cup made of? reason: because it is a grayish cardboard material",
+    "output": "the answer is paper",
+    "label": "the answer is cardboard"
+  },
+  {
+    "input": "what kind of meat is this? reason: because it is a chunk of cooked red flesh",
+    "output": "the answer is steak",
+    "label": "the answer is chicken"
+  },
+  {
+    "input": "what kind of meat is on the plate? reason: because it is a chunk of cooked red flesh",
+    "output": "the answer is steak",
+    "label": "the answer is chicken"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a large beak and lives near the sea",
+    "output": "the answer is seagull",
+    "label": "the answer is gull"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a large beak and lives near the sea",
+    "output": "the answer is seagull",
+    "label": "the answer is pelican"
+  },
+  {
+    "input": "is the dog swimming? reason: because it is on the beach",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel? reason: because decorative trinkets are everywhere surrounding seating",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of water is this? reason: because it is a long body of water",
+    "output": "the answer is ocean",
+    "label": "the answer is lake"
+  },
+  {
+    "input": "is it snowing? reason: because the snow covered hills can be clearly seen against a blue sky",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has strips on it and looks like a horse kind of",
+    "output": "the answer is horse",
+    "label": "the answer is zebra"
+  },
+  {
+    "input": "what kind of car is this? reason: because the letter \"l\" logo on the grill of the car suggests the make of the vehicle",
+    "output": "the answer is lexus",
+    "label": "the answer is lincoln"
+  },
+  {
+    "input": "what kind of shoes is the man wearing? reason: because they are blue and made of a thick material",
+    "output": "the answer is boots",
+    "label": "the answer is sneakers"
+  },
+  {
+    "input": "what kind of food is this? reason: because there is a sandwich on a plate that has ham in it",
+    "output": "the answer is ham",
+    "label": "the answer is sandwich"
+  },
+  {
+    "input": "what holiday is this? reason: because there are flowers on the mantle",
+    "output": "the answer is valentine's day",
+    "label": "the answer is christmas"
+  },
+  {
+    "input": "is this a home? reason: because there are lots of plants and frilly items",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a zoo? reason: because the tourist truck is driving through the grassy wilderness viewing giraffes and other wildlife",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a modern plane? reason: because there are two propellers on both plane wings",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the cow look happy? reason: because he is standing there staring at the camera calmly",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the cat like the shadow? reason: because he is not reacting to the shadow",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the ground made of? reason: because the ground is covered in small white blocks",
+    "output": "the answer is brick",
+    "label": "the answer is sand"
+  },
+  {
+    "input": "is the man wearing a hat? reason: because he is leaning back in the sun",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man sitting? reason: because he is leaning back in the sun",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of book is this? reason: because it has a front cover with text",
+    "output": "the answer is book",
+    "label": "the answer is novel"
+  },
+  {
+    "input": "is the book open? reason: because pages are contained behind the cover",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what sport is this? reason: because it is their favorite sport",
+    "output": "the answer is skateboarding",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what are the people doing? reason: because it is their favorite sport",
+    "output": "the answer is skateboarding",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what sport is this? reason: because one man is grappling with the other",
+    "output": "the answer is wrestling",
+    "label": "the answer is baseball"
+  },
+  {
+    "input": "is the microwave on? reason: because the time is showing and the inside light is not on",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the microwave on? reason: because the clock on the microwave shows the time rather than a cooking time",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has thick white fur around its hooves",
+    "output": "the answer is sheep",
+    "label": "the answer is horse"
+  },
+  {
+    "input": "what kind of pans are on the table? reason: because they are all frying pans of different sizes",
+    "output": "the answer is frying",
+    "label": "the answer is fry pans"
+  },
+  {
+    "input": "what is the cat doing? reason: because mice are used in conjunction with computers",
+    "output": "the answer is playing mouse",
+    "label": "the answer is playing"
+  },
+  {
+    "input": "what animal is this? reason: because he is being carried on the back of one",
+    "output": "the answer is giraffe",
+    "label": "the answer is horse"
+  },
+  {
+    "input": "what is the man doing? reason: because he is sitting on the horse's back",
+    "output": "the answer is riding horse",
+    "label": "the answer is riding"
+  },
+  {
+    "input": "does the window have a tint? reason: because there are a lot of clear panels",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a frozen meal? reason: because the container holding the food is made of plastic",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the phone have a earpiece? reason: because it is hanging loose from the phone and not intertwined with itself",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what are the people doing? reason: because they are in a large body of water",
+    "output": "the answer is swimming",
+    "label": "the answer is surfing"
+  },
+  {
+    "input": "is this a big ben? reason: because big ben is off in the distance",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are rinsing their toothbrushes",
+    "output": "the answer is brushing teeth",
+    "label": "the answer is washing teeth"
+  },
+  {
+    "input": "what type of bicycle is this? reason: because the thin wheels and ties are clearly visible beneath the person riding the bicycle",
+    "output": "the answer is trike",
+    "label": "the answer is tricycle"
+  },
+  {
+    "input": "is it night time? reason: because no streetlights are turned on",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because is has a long body and short in stature",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal is short with a long body",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "does one of the men look to the left? reason: because one is looking to the left and one is looking right at the camera",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the man on the left look to the left? reason: because one is looking to the left and one is looking right at the camera",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does one person look to the left? reason: because one is looking to the left and one is looking right at the camera",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does this dish need salt? reason: because salt is covering the entire dish",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does this meal need salt? reason: because salt is covering the entire dish",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel? reason: because three dogs are sleeping on a comfortable bed",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a wedding? reason: because there is a teddy bear dressed up as the bride",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what holiday is this? reason: because there are wedding gifts on the table",
+    "output": "the answer is wedding",
+    "label": "the answer is christmas"
+  },
+  {
+    "input": "is the skateboard a skateboard? reason: because the skateboard only has wheels",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is holding onto a teddy bear",
+    "output": "the answer is holding baby",
+    "label": "the answer is playing"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is holding a nunchuk",
+    "output": "the answer is playing wii",
+    "label": "the answer is playing video game"
+  },
+  {
+    "input": "is the woman reading? reason: because she is just looking at a paper",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of food is this? reason: because two hot dogs are on a plate with shredded potato tots",
+    "output": "the answer is hot dogs",
+    "label": "the answer is hot dog"
+  },
+  {
+    "input": "is the man sitting on the bed? reason: because he is not touching the ground at the moment",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the dog doing? reason: because the spotted dog is holding a frisbee in it's mouth",
+    "output": "the answer is playing frisbee",
+    "label": "the answer is throwing frisbee"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has fur, pointy ears, and four paws and doesn't like water",
+    "output": "the answer is dog",
+    "label": "the answer is cat"
+  },
+  {
+    "input": "what brand of tennis rackets are they using? reason: because the logo is on the sign behind the players",
+    "output": "the answer is samsung",
+    "label": "the answer is pfizer"
+  },
+  {
+    "input": "is the couple talking? reason: because they are both looking at the camera",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the elephant have tusks? reason: because the tusks have been trimmed and are short in comparison to the trunk",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of traffic light is this? reason: because it is red and segmented into small rectangles",
+    "output": "the answer is stop",
+    "label": "the answer is red"
+  },
+  {
+    "input": "what type of traffic light is this? reason: because it is red and segmented into small rectangles",
+    "output": "the answer is stop",
+    "label": "the answer is red"
+  },
+  {
+    "input": "is the sign in the background a traffic light? reason: because it states one way and points to the right",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a fresh flower? reason: because the purple flowers are in a vase with water so they do not wither",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a potted plant? reason: because the purple flowers are in a vase with water so they do not wither",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man sitting? reason: because he is upright and his legs are extended",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of plants are in the vases? reason: because they are in gold vases",
+    "output": "the answer is roses",
+    "label": "the answer is flowers"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal is a large, four legged creature",
+    "output": "the answer is horse",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "is this a zoo? reason: because there is a wire fence around the pasture",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a long snout, large ears, and fur, and is an indoor pet",
+    "output": "the answer is cat",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what brand of tv is this? reason: because you can see the brand name on the bottom of the screen",
+    "output": "the answer is sony",
+    "label": "the answer is apple"
+  },
+  {
+    "input": "is the man playing with the dog? reason: because the man is petting the dog",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what sport are they playing? reason: because they are cooking a ball around",
+    "output": "the answer is frisbee",
+    "label": "the answer is soccer"
+  },
+  {
+    "input": "is this a commercial plane? reason: because on the side alaska is written in fancy letters on the plane",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a window? reason: because this is a picture of outside",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this in a harbor? reason: because the large sailing ship needs deep water to float",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the driver going to stop? reason: because there is a red man on the cross walk sign, which means to stop",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the man doing? reason: because he is slipping on his feet across a board",
+    "output": "the answer is skateboarding",
+    "label": "the answer is surfing"
+  },
+  {
+    "input": "what is the zebra doing? reason: because the one has its face down near the grass",
+    "output": "the answer is eating",
+    "label": "the answer is sleeping"
+  },
+  {
+    "input": "is this a train track? reason: because the rails have trees on one side and gravel on the other",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what type of boat is this? reason: because it is a large boat with a motor",
+    "output": "the answer is sailboat",
+    "label": "the answer is fishing"
+  },
+  {
+    "input": "what type of boat is this? reason: because it is a large boat with a motor",
+    "output": "the answer is sailboat",
+    "label": "the answer is yacht"
+  },
+  {
+    "input": "what kind of vehicle is this? reason: because it's long and has many windows",
+    "output": "the answer is bus",
+    "label": "the answer is train"
+  },
+  {
+    "input": "what kind of tablecloth is on the table? reason: because it is woven from pliable twig-like material",
+    "output": "the answer is wicker",
+    "label": "the answer is rattan"
+  },
+  {
+    "input": "what is the table made of? reason: because it is woven from pliable twig-like material",
+    "output": "the answer is wood",
+    "label": "the answer is bamboo"
+  },
+  {
+    "input": "does the sink need to be cleaned? reason: because it is white and does not have any residue inside it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the woman have a sandwich? reason: because she is hungry and has chinese food",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the woman eating? reason: because she has a carton that she is sticking a fork into",
+    "output": "the answer is milk",
+    "label": "the answer is sandwich"
+  },
+  {
+    "input": "does this sandwich have a ham or turkey filling? reason: because the sandwich is filled with corned beef",
+    "output": "the answer is no",
+    "label": "the answer is turkey"
+  },
+  {
+    "input": "is the toilet flushed? reason: because it is in the upright position",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a recent photo? reason: because artistic coloring is used in the composition",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of faucet is on the left? reason: because it has a long, skinny post",
+    "output": "the answer is shower",
+    "label": "the answer is spout"
+  },
+  {
+    "input": "what kind of toilet is this? reason: because it has a long, skinny post",
+    "output": "the answer is stall",
+    "label": "the answer is cistern"
+  },
+  {
+    "input": "what kind of faucet is this? reason: because it has a long, skinny post",
+    "output": "the answer is shower",
+    "label": "the answer is wall mount"
+  },
+  {
+    "input": "what kind of toilet is this? reason: because the base is straight and the bowl is curved",
+    "output": "the answer is elongated",
+    "label": "the answer is round"
+  },
+  {
+    "input": "is this a salad? reason: because bits of broccoli are cut up in the container",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what type of vehicle is this? reason: because it is being pulled by an engine",
+    "output": "the answer is motorcycle",
+    "label": "the answer is train"
+  },
+  {
+    "input": "what is the buses name? reason: because that is what displays o n the buses front panel",
+    "output": "the answer is san francisco",
+    "label": "the answer is st louis"
+  },
+  {
+    "input": "what is the buses name? reason: because that is what displays o n the buses front panel",
+    "output": "the answer is san francisco",
+    "label": "the answer is asian"
+  },
+  {
+    "input": "what is the buses name? reason: because that is what displays o n the buses front panel",
+    "output": "the answer is san francisco",
+    "label": "the answer is ada"
+  },
+  {
+    "input": "what are the men doing? reason: because they have their hands extended to one another",
+    "output": "the answer is talking",
+    "label": "the answer is shaking hands"
+  },
+  {
+    "input": "what are the men doing? reason: because they have their hands extended to one another",
+    "output": "the answer is talking",
+    "label": "the answer is posing"
+  },
+  {
+    "input": "is the dog sitting? reason: because his rear end is on the ground while his back is up",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the dog swimming? reason: because his butt is on the surface of the boat",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the cat sitting on? reason: because it is brown and has wood markings on it",
+    "output": "the answer is chair",
+    "label": "the answer is wood"
+  },
+  {
+    "input": "what are the people doing? reason: because they are wearing costumes, including a green m&m candy outfit",
+    "output": "the answer is dressing up",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "is this a ski competition? reason: because some of the skiiers are in costumes",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what sport is this? reason: because he is throwing a ball",
+    "output": "the answer is frisbee",
+    "label": "the answer is baseball"
+  },
+  {
+    "input": "what are the zebras doing? reason: because they are face down in a pile of hay",
+    "output": "the answer is sleeping",
+    "label": "the answer is eating"
+  },
+  {
+    "input": "what kind of vegetables are in the bowl? reason: because the are bright red with green stems on top",
+    "output": "the answer is tomatoes",
+    "label": "the answer is carrots"
+  },
+  {
+    "input": "does the man have green pants and green shirt? reason: because his shirt is green but his pants are white",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of shoes is the man wearing? reason: because they are white with red stripes",
+    "output": "the answer is nike",
+    "label": "the answer is striped"
+  },
+  {
+    "input": "what kind of shoes is the woman wearing? reason: because they are white with red stripes",
+    "output": "the answer is zebra",
+    "label": "the answer is striped"
+  },
+  {
+    "input": "what room is this? reason: because there is a computer and a counter with items on it",
+    "output": "the answer is kitchen",
+    "label": "the answer is office"
+  },
+  {
+    "input": "is this a park? reason: because there are vehicles parked and a man riding a horse",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the dog moving? reason: because the traffic lights are showing green",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it is white with grey wings and a yellow beak",
+    "output": "the answer is swan",
+    "label": "the answer is egret"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it is white with grey wings and a yellow beak",
+    "output": "the answer is swan",
+    "label": "the answer is robin"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it is a white bird with a gray wing and hooked beak, and it is standing on shore",
+    "output": "the answer is seagull",
+    "label": "the answer is gull"
+  },
+  {
+    "input": "what kind of beverage is being served? reason: because it is a brown liquid in a bottle",
+    "output": "the answer is beer",
+    "label": "the answer is wine"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a brown and black face and a stocky build",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of fork is in the picture? reason: because it is white and sticking into a cake atop of a paper plate",
+    "output": "the answer is plastic",
+    "label": "the answer is fork"
+  },
+  {
+    "input": "what kind of fork is this? reason: because it is white and sticking into a cake atop of a paper plate",
+    "output": "the answer is plastic",
+    "label": "the answer is knife"
+  },
+  {
+    "input": "what kind of pot is this? reason: because it has a large pitcher on top of a base",
+    "output": "the answer is coffee",
+    "label": "the answer is coffee maker"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because all the bunches are green",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "is this a person sitting on the bench? reason: because it is a park bench",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a birthday cake? reason: because it is a cake made to look like zoo animals",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a real cake? reason: because cake decorations are made from edible fondant",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of food is this? reason: because it is round and it has sprinkles",
+    "output": "the answer is donut",
+    "label": "the answer is cake"
+  },
+  {
+    "input": "what are the people doing? reason: because they are all standing around talking and drinking",
+    "output": "the answer is sitting",
+    "label": "the answer is drinking"
+  },
+  {
+    "input": "what sport is this? reason: because his arm is wound up and he is stepping forward",
+    "output": "the answer is frisbee",
+    "label": "the answer is baseball"
+  },
+  {
+    "input": "what is the man doing? reason: because his arm is wound up and he is stepping forward",
+    "output": "the answer is flying kite",
+    "label": "the answer is throwing"
+  },
+  {
+    "input": "is the light on? reason: because it is a red light",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a dog in a kennel? reason: because dogs are trained to behave indoors",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal has long golden fur",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "is the man on the right side of the road? reason: because his wheel is further from the solid white line",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a single engine plane? reason: because there is one engine on each side",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is it raining? reason: because the sky is clear and darkening",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel room? reason: because the bed frames are antique",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel room? reason: because the beds are made out of ornate wood",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the hot dog have a bun? reason: because typically a hot dog goes inside a hot dog bun",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a vegetarian pizza? reason: because there is just pepperoni on it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of device is this? reason: because a keyboard is being typed on",
+    "output": "the answer is laptop",
+    "label": "the answer is computer"
+  },
+  {
+    "input": "what room is this? reason: because there is a shelf with many books",
+    "output": "the answer is library",
+    "label": "the answer is living room"
+  },
+  {
+    "input": "is this a farm? reason: because a large heard of sheep are marching down a street",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is large and brown",
+    "output": "the answer is bear",
+    "label": "the answer is cow"
+  },
+  {
+    "input": "what is the liquid in the bowl? reason: because the liquid is red and looks thick in consistency",
+    "output": "the answer is wine",
+    "label": "the answer is juice"
+  },
+  {
+    "input": "what kind of liquid is in the bowl? reason: because the liquid is red and looks thick in consistency",
+    "output": "the answer is wine",
+    "label": "the answer is jam"
+  },
+  {
+    "input": "what kind of liquid is in the bowl? reason: because the liquid is red and looks thick in consistency",
+    "output": "the answer is wine",
+    "label": "the answer is tomato juice"
+  },
+  {
+    "input": "what kind of food is this? reason: because it looks like it is glazed with sugar",
+    "output": "the answer is cake",
+    "label": "the answer is donut"
+  },
+  {
+    "input": "is this a modern fleet? reason: because they are tractor trailers and they all run on diesel",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "are these modern vehicles? reason: because they are tractor trailers and they all run on diesel",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the truck have a spare tire? reason: because they have been torn in pieces",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of umbrellas are these? reason: because they are blue and thick material",
+    "output": "the answer is beach",
+    "label": "the answer is rain"
+  },
+  {
+    "input": "what kind of shoes is the man wearing? reason: because they are blue and thick material",
+    "output": "the answer is boots",
+    "label": "the answer is sandals"
+  },
+  {
+    "input": "what kind of appliance is this? reason: because it has some buttons and dials and a vessel at the top and a metal mechanism for cutting",
+    "output": "the answer is microwave",
+    "label": "the answer is coffee maker"
+  },
+  {
+    "input": "what kind of appliance is this? reason: because it has some buttons and dials and a vessel at the top and a metal mechanism for cutting",
+    "output": "the answer is microwave",
+    "label": "the answer is blender"
+  },
+  {
+    "input": "what kind of tool is this? reason: because it has a container with sharp blades in the bottom",
+    "output": "the answer is knife",
+    "label": "the answer is razor"
+  },
+  {
+    "input": "what kind of machine is this? reason: because it has a container with sharp blades in the bottom",
+    "output": "the answer is pizza cutter",
+    "label": "the answer is razor"
+  },
+  {
+    "input": "is the plane flying? reason: because the shot is from below up to the sky",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a healthy meal? reason: because the dish is pan fried vegetables",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a street? reason: because what appears to be a pole is just a line in the background",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the beer cold? reason: because the beer has a slight head on it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a beach? reason: because there are a lot of his and trees",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this man in a park? reason: because he is just skateboarding alone",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what kind of bird is this? reason: because the bird has a long, curved neck",
+    "output": "the answer is giraffe",
+    "label": "the answer is eagle"
+  },
+  {
+    "input": "what kind of bird is this? reason: because it has a very long neck",
+    "output": "the answer is giraffe",
+    "label": "the answer is eagle"
+  },
+  {
+    "input": "what kind of floor is this? reason: because it is solid in color and texture and is in a living room",
+    "output": "the answer is wood",
+    "label": "the answer is hardwood"
+  },
+  {
+    "input": "what kind of bedding is this? reason: because they are formed in a checkered pattern",
+    "output": "the answer is sheets",
+    "label": "the answer is striped"
+  },
+  {
+    "input": "what kind of shoes is the bear wearing? reason: because they are formed in a checkered pattern",
+    "output": "the answer is sneakers",
+    "label": "the answer is socks"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it is hairy and large",
+    "output": "the answer is bear",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what type of device is this? reason: because it is a round device by a keyboard",
+    "output": "the answer is laptop",
+    "label": "the answer is mouse"
+  },
+  {
+    "input": "is the kite flying? reason: because it's rolling toward the shore",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the giraffe doing? reason: because his eyes and ears are pointed in this direction",
+    "output": "the answer is looking at camera",
+    "label": "the answer is looking"
+  },
+  {
+    "input": "what are the people doing? reason: because they are being pulled across the water on skis",
+    "output": "the answer is water skiing",
+    "label": "the answer is skiing"
+  },
+  {
+    "input": "is it night time? reason: because the lights on the bus are not on",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are holding small white sticks to their mouths",
+    "output": "the answer is eating",
+    "label": "the answer is smoking"
+  },
+  {
+    "input": "what room is this? reason: because the people are at a dining table with food on it",
+    "output": "the answer is kitchen",
+    "label": "the answer is dining room"
+  },
+  {
+    "input": "is the television on? reason: because the edges of the television and the picture on the screen are blurred",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a restaurant? reason: because the plate is made of ceramic or plastic",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a disposable plate? reason: because the plate is made of ceramic or plastic",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what season is this? reason: because the blooming flowers are bright pink and orange",
+    "output": "the answer is summer",
+    "label": "the answer is spring"
+  },
+  {
+    "input": "what kind of plant is this? reason: because the blooming flowers are bright pink and orange",
+    "output": "the answer is rose",
+    "label": "the answer is lily"
+  },
+  {
+    "input": "what kind of animal is this? reason: because the animal has long teeth and nose",
+    "output": "the answer is dog",
+    "label": "the answer is elephant"
+  },
+  {
+    "input": "what kind of grass is this? reason: because it is brown and dried",
+    "output": "the answer is rye",
+    "label": "the answer is hay"
+  },
+  {
+    "input": "what kind of grass is this? reason: because it is brown in color and dry",
+    "output": "the answer is sand",
+    "label": "the answer is hay"
+  },
+  {
+    "input": "does the truck have a roof? reason: because there are vines growing all over it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the zebras in a line? reason: because the front zebra is the farthest ahead",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the woman have shoes on? reason: because the toes are visible",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the man have shoes on? reason: because the toes are visible",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are wearing wedding outfits",
+    "output": "the answer is wedding",
+    "label": "the answer is getting married"
+  },
+  {
+    "input": "what is the floor made of? reason: because there is clear material in the squares",
+    "output": "the answer is glass",
+    "label": "the answer is tile"
+  },
+  {
+    "input": "what is the person holding? reason: because it is holding food inside of the object",
+    "output": "the answer is sandwich",
+    "label": "the answer is bowl"
+  },
+  {
+    "input": "what is the object made of? reason: because it is holding food inside of the object",
+    "output": "the answer is plastic",
+    "label": "the answer is bowl"
+  },
+  {
+    "input": "is this a conference room? reason: because people are sitting on either side of an aisle watching people walking down it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a hotel? reason: because people are sitting on either side of an aisle watching people walking down it",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the people doing? reason: because they are outside over a snowy hill",
+    "output": "the answer is skiing",
+    "label": "the answer is snowboarding"
+  },
+  {
+    "input": "what kind of animal is this? reason: because it has a large head in proportion to its body",
+    "output": "the answer is giraffe",
+    "label": "the answer is dog"
+  },
+  {
+    "input": "what kind of animal is this? reason: because they are walking on all fours and are covered in fur",
+    "output": "the answer is dog",
+    "label": "the answer is bear"
+  },
+  {
+    "input": "what type of luggage is this? reason: because it has a handle so it's easy to carry",
+    "output": "the answer is suitcase",
+    "label": "the answer is backpack"
+  },
+  {
+    "input": "what kind of luggage is this? reason: because it has a handle so it's easy to carry",
+    "output": "the answer is suitcase",
+    "label": "the answer is backpack"
+  },
+  {
+    "input": "what brand of boat is this? reason: because a large advertisement featuring the brand is visible",
+    "output": "the answer is yamaha",
+    "label": "the answer is sailor"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because they are bunched together and small",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "is this a home office? reason: because there are several computer screens and telephones on the desk",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a home office? reason: because there are several computers and monitors on a desk",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a hotel room? reason: because it is very small and has a ber",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what are the zebras doing? reason: because they are picking up their feet",
+    "output": "the answer is standing",
+    "label": "the answer is walking"
+  },
+  {
+    "input": "what are the zebras doing? reason: because they are headed across the grass",
+    "output": "the answer is walking",
+    "label": "the answer is running"
+  },
+  {
+    "input": "is the car on the left or right? reason: because they are both traveling down a highway",
+    "output": "the answer is left",
+    "label": "the answer is right"
+  },
+  {
+    "input": "what kind of frosting is on the cake? reason: because it has a creamy white texture",
+    "output": "the answer is butter",
+    "label": "the answer is buttercream"
+  },
+  {
+    "input": "is this food cooked? reason: because the food item was just taken out of a cake pan",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man sitting in the chair facing the camera? reason: because the man is leaning to his left as he listens and you can see the back of the chair behind him",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the man in the back have the same name as the man in the front? reason: because they share the same name but not resemblance",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the cat need to be in the back of the bike? reason: because it may get hurt or run over",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the water calm? reason: because you can see boats out across the shore line and the other side as well",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a pond? reason: because the other shoreline is seen in the distance",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the man have a t shirt on? reason: because he has both a short sleeve and long sleeve shirt on",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the train moving? reason: because there is a train and the doors are not open yet",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the train moving? reason: because standing closer to close to the tracks is dangerous",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the toilet paper rolled up? reason: because you can see just a few rows of toilet paper left wrapped around the cardboard",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the man skateboarding? reason: because he is posing for the camera",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what is the man riding on? reason: because that looks like natural wood on that board",
+    "output": "the answer is skateboard",
+    "label": "the answer is surfboard"
+  },
+  {
+    "input": "what is the man sitting on? reason: because it is a nice wooden color",
+    "output": "the answer is chair",
+    "label": "the answer is surfboard"
+  },
+  {
+    "input": "what is the man standing on? reason: because it is a nice wooden color",
+    "output": "the answer is bench",
+    "label": "the answer is board"
+  },
+  {
+    "input": "is this a one way street? reason: because the sign states that you can only go forward or take a right turn",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a stop sign? reason: because the sign states that you can only go forward or take a right turn",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is this a group photo? reason: because all of the people are either standing or sitting on surf boards facing different ways",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a truck stop? reason: because there is a big white sign reading \"no trucks\"",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what phone is this? reason: because the logo is on the top",
+    "output": "the answer is apple",
+    "label": "the answer is iphone"
+  },
+  {
+    "input": "does the cat have a bald spot? reason: because there are hairs coming from the top of the ears",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "does the cat have a bald spot? reason: because there is hair coming out from the ear",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the woman looking at the phone? reason: because she is looking at herself",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of fruit is this? reason: because they are long, curved yellow fruit",
+    "output": "the answer is banana",
+    "label": "the answer is bananas"
+  },
+  {
+    "input": "is this a hotel room? reason: because it appears to be a hospital room and they always have twin beds",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of vehicle is this? reason: because the men are sitting on top of it as it drives down the street",
+    "output": "the answer is motorcycle",
+    "label": "the answer is truck"
+  },
+  {
+    "input": "what type of vehicle is this? reason: because the men are sitting on top of it as it drives down the street",
+    "output": "the answer is motorcycle",
+    "label": "the answer is truck"
+  },
+  {
+    "input": "is this a passenger train? reason: because it is sitting on a track next to a railroad engineer",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the zebra licking its face? reason: because it has its face stuck in the grass",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a passenger train? reason: because there are no drivers in the cars",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "what is the woman riding? reason: because she is holding the handlebars with both hands",
+    "output": "the answer is motorcycle",
+    "label": "the answer is bicycle"
+  },
+  {
+    "input": "what inning is this? reason: because there is a number 4 above the inning label on the sign",
+    "output": "the answer is fourth",
+    "label": "the answer is 4th"
+  },
+  {
+    "input": "what is the woman doing? reason: because she is writing something on the surfboard",
+    "output": "the answer is surfing",
+    "label": "the answer is writing"
+  },
+  {
+    "input": "what sport is this? reason: because he is throwing a ball up then attempting to hit it",
+    "output": "the answer is baseball",
+    "label": "the answer is tennis"
+  },
+  {
+    "input": "what kind of utensils are in the picture? reason: because they are brown and interwoven staws",
+    "output": "the answer is bamboo",
+    "label": "the answer is spoon"
+  },
+  {
+    "input": "what kind of straws are in the basket? reason: because they are brown and interwoven staws",
+    "output": "the answer is paper",
+    "label": "the answer is straw"
+  },
+  {
+    "input": "what is the man sitting on? reason: because the surface is solid and flat and it is at waist height",
+    "output": "the answer is chair",
+    "label": "the answer is table"
+  },
+  {
+    "input": "is this food ready to eat? reason: because it is in a tupperware container",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what type of vehicle is this? reason: because it has handlebars and two wheels",
+    "output": "the answer is motorcycle",
+    "label": "the answer is bicycle"
+  },
+  {
+    "input": "what kind of vehicle is this? reason: because it has handlebars and two wheels",
+    "output": "the answer is motorcycle",
+    "label": "the answer is bicycle"
+  },
+  {
+    "input": "what kind of room is this? reason: because there are a bunch of teddy bears",
+    "output": "the answer is bedroom",
+    "label": "the answer is nursery"
+  },
+  {
+    "input": "what type of room is this? reason: because there are a bunch of teddy bears",
+    "output": "the answer is bedroom",
+    "label": "the answer is nursery"
+  },
+  {
+    "input": "what country is this? reason: because there are 13 red and white stripes and blue with white stars",
+    "output": "the answer is u.s.",
+    "label": "the answer is united states"
+  },
+  {
+    "input": "is this a beach? reason: because the long green grass is a perfect spot to relax",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is this a park? reason: because the older gentleman is laying in a cow field with flowers and grass",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of building is this? reason: because this is cylindrical and shaped like a fire hydrant",
+    "output": "the answer is fire station",
+    "label": "the answer is fire hydrant"
+  },
+  {
+    "input": "is this a flower farm? reason: because the plants in the large pitcher are decorative flowers and may not be safe for consumption",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "does the cat look happy? reason: because it is just staring at the camera",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "what kind of horse is this? reason: because it is brown and crumby",
+    "output": "the answer is tan",
+    "label": "the answer is mule"
+  },
+  {
+    "input": "is this a restaurant? reason: because there is a grill in the background, and the table setting is informal",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  },
+  {
+    "input": "is the motorcycle parked? reason: because it is looking at a phone",
+    "output": "the answer is yes",
+    "label": "the answer is no"
+  },
+  {
+    "input": "is the biker looking at the road? reason: because it is looking at a phone",
+    "output": "the answer is no",
+    "label": "the answer is yes"
+  }
+]

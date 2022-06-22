@@ -25,6 +25,38 @@ def random_data_choice(anno, num):
     
     return fewshot_data
 
+class AnswerGenDataset(Dataset):
+    def __init__(self, pair_data, tokenizer):
+        super().__init__()
+        self.inputs = []
+        self.labels = []
+        for i in tqdm(range(len(pair_data))):
+            data = pair_data[i]
+            question_txt = data["question"]    # question
+            answer_txt = data["answer"]
+            explain_txt = data["reason"]
+
+            # composition of text
+            # question: [Q] reason: [E] -> the answer is [A]
+            t_a_input = f"{question_txt}? reason: {explain_txt}"
+            t_a_label = f"the answer is {answer_txt}"
+
+            # tokenize and encode
+            t_a_input = tokenizer(t_a_input).input_ids
+            t_a_label = tokenizer(t_a_label).input_ids
+            self.inputs.append(t_a_input)
+            self.labels.append(t_a_label)
+    
+    def __getitem__(self, index):
+        enc_input = torch.tensor(self.inputs[index], dtype=torch.long)
+        label = torch.tensor(self.labels[index], dtype=torch.long)
+
+        return enc_input, label
+
+    def __len__(self):
+        return len(self.inputs)
+
+
 class QAGenDataset(Dataset):
     def __init__(self, anno_path, object_label_dir, tokenizer):
         super().__init__()
@@ -42,7 +74,7 @@ class QAGenDataset(Dataset):
         
         self.inputs = []
         self.labels = []
-        for i in tqdm(range(len(anno))):
+        for i in tqdm(range(len(ids_list))):
             question_id = ids_list[i]
             sample = anno[question_id]
             img_name = sample['image_name']
@@ -57,9 +89,9 @@ class QAGenDataset(Dataset):
                 index_tracker[question_id] -= 1    # decrease usage
             
             # composition of text
-            # because [E] -> question: [Q], the answer is [A]
+            # because [E] -> [Q], the answer is [A]
             t_e_input = f"because {explain_txt}. "
-            t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
+            t_e_label = f"{question_txt}? the answer is {answer_txt}"
 
             obj_label = obj_labels[img_name]
             if obj_label:
@@ -198,7 +230,7 @@ class VQAXDataModule(BaseDataModule):
                     obj_labels = json.load(fin)
                     
             datasets = []
-            for i in tqdm(range(len(anno)), desc= f"Processing VQA-X {mode} data"):
+            for i in tqdm(range(len(ids_list)), desc= f"Processing VQA-X {mode} data"):
                 question_id = ids_list[i]
                 sample = anno[question_id]
                 img_name = sample['image_name']
@@ -215,9 +247,9 @@ class VQAXDataModule(BaseDataModule):
                 # composition of text
                 # because [E] -> question: [Q], the answer is [A]
                 t_e_input = f"because {explain_txt}. "
-                t_e_label = f"question: {question_txt} , the answer is {answer_txt}"
+                t_e_label = f"{question_txt}? the answer is {answer_txt}"
                 # question: [Q] reason: [E] -> the answer is [A]
-                t_a_input = f"question: {question_txt} reason: {explain_txt}"
+                t_a_input = f"{question_txt}? reason: {explain_txt}"
                 t_a_label = f"the answer is {answer_txt}"
 
                 if obj_labels is not None:

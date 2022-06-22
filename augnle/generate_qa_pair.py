@@ -1,7 +1,7 @@
 import os, json
 import torch
 from pytorch_lightning import Trainer, seed_everything
-from dataloader import VQAXDataModule, QAGenDataset
+from dataloader import VQAXDataModule, QAGenDataset, AnswerGenDataset
 from models.lightning import PromptTuning
 import argparse
 import datetime
@@ -18,7 +18,7 @@ class MatchingScorer(object):
     scorer = MatchingScorer(metric="EmbeddingAverageCosineSimilarity")
     print(scorer.forward("banana", "only banana"))
     """
-    def __init__(self, metric="GreedyMatchingScore"):
+    def __init__(self, metric="EmbeddingAverageCosineSimilarity"):
         matching_metrics = [
             'Bleu_1',
             'EmbeddingAverageCosineSimilarity',
@@ -59,47 +59,142 @@ def load_T5_backbone(args):
 
     return config, tokenizer, backbone
 
+def decode_to_QAE(results):
+    decoded = []
+    for result in results:
+        reason = result["input"].split(".")
+        obj_label = reason[1]
+        if len(reason) > 2:
+            reason = result["input"].split(". there")
+            obj_label = "there" + reason[1]
+        reason = reason[0]
+
+        if type(result["output"]) is not list:
+            result["output"] = [result["output"]]
+            
+        for out in result["output"]:
+            question, answer = out.split("? the answer is ")
+            decoded.append({
+                "question": question,
+                "answer": answer,
+                "reason": reason,
+                "objects": obj_label.strip()
+            })
+
+    return decoded
+
+
+def collate_wrapper(batch):
+    batch = list(zip(*batch))
+    sample = {}
+
+    # enc max len
+    enc_max_len = max([x.size(0) for x in batch[0]])
+    # enc_input
+    enc_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+    enc_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
+    for i, x in enumerate(batch[0]):
+        enc_inputs[i,:x.size(0)] = x
+        enc_attn_mask[i,:x.size(0)] = 1.0
+    
+    # label
+    dec_max_len = max([x.size(0) for x in batch[1]])
+    label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
+    for i, x in enumerate(batch[1]):
+        label[i,:x.size(0)] = x
+
+    sample["enc_inputs"] = enc_inputs
+    sample["attn_mask"] = enc_attn_mask
+    sample["labels"] = label
+
+    return sample
+
 
 def generate_QA_from_explanation(backbone, tokenizer, args):
-    def collate_wrapper(batch):
-        batch = list(zip(*batch))
-        sample = {}
-
-        # enc max len
-        enc_max_len = max([x.size(0) for x in batch[0]])
-        # enc_input
-        enc_inputs = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
-        enc_attn_mask = torch.zeros((len(batch[0]), enc_max_len), dtype=torch.long)
-        for i, x in enumerate(batch[0]):
-            enc_inputs[i,:x.size(0)] = x
-            enc_attn_mask[i,:x.size(0)] = 1.0
-        
-        # label
-        dec_max_len = max([x.size(0) for x in batch[1]])
-        label = torch.zeros((len(batch[1]), dec_max_len), dtype=torch.long)
-        for i, x in enumerate(batch[1]):
-            label[i,:x.size(0)] = x
-
-        sample["enc_inputs"] = enc_inputs
-        sample["attn_mask"] = enc_attn_mask
-        sample["labels"] = label
-
-        return sample
-
     args.inference = True
     model = PromptTuning.load_from_checkpoint(args.load_ckpt_path, strict=False, hparams=args, lm_backbone=backbone, tokenizer=tokenizer)
+    model.set_prompt_A()
     trainer = Trainer(accelerator = "gpu", gpus=1)
     dataset = QAGenDataset(args.anno_path, args.object_label_path, tokenizer)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=args.batch_size, num_workers=args.n_workers,\
                             pin_memory=True, collate_fn=collate_wrapper)
     results = trainer.predict(model, dataloaders=dataloader)
+    
+    candidates = []
+    for b in results:
+        candidates.extend(b)
+    
+    candidates = decode_to_QAE(candidates)
+
     if not os.path.exists(args.qa_save_dir):
         os.mkdir(args.qa_save_dir)
 
     with open(f"{args.qa_save_dir}/origin_k-{args.top_k}_p-{args.top_p}_t-{args.temperature}.json", "w") as fout:
-        json.dump(results, fout, indent=2)
+        json.dump(candidates, fout, indent=2)
 
-    return results
+    return candidates, model
+
+
+def is_matched(output, label):
+    if output==label:
+        return True
+    
+    output = output.split("the answer is ")[-1]
+    label = label.split("the answer is ")[-1]
+
+    out_no_space = "".join(output.split(" "))
+    label_no_space = "".join(label.split(" "))
+    if out_no_space==label_no_space:
+        return True
+
+    if len(output) < 4 and len(label) < 4:
+        return False
+
+    if len(output) > len(label) and output[:-2]==label:
+        return True
+    
+    if len(output) < len(label) and output==label[:-2]:
+        return True
+    
+    return False
+
+
+def answer_based_filtering(candidates, model, tokenizer, args):
+    name = f"k-{args.top_k}_p-{args.top_p}_t-{args.temperature}_n_{args.num_return_sequences}.json"
+    args.inference = True
+    args.temperature = 1.0
+    args.num_return_sequences = 1
+    args.top_k = None
+    args.top_p = None
+    model.set_prompt_B()
+
+    trainer = Trainer(accelerator="gpu", gpus=1)
+    dataset = AnswerGenDataset(candidates, tokenizer)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=args.batch_size, num_workers=args.n_workers,\
+                            pin_memory=True, collate_fn=collate_wrapper)
+    results = trainer.predict(model, dataloaders=dataloader)
+
+    pair_data = []
+    for b in results:
+        pair_data.extend(b)
+
+    matched = []
+    unmatched = []
+    for data in pair_data:
+        if is_matched(data["output"], data["label"]):
+            matched.append(data)
+        else:
+            unmatched.append(data)
+    
+    match_rate = "%.2f" % ((len(matched)/len(pair_data))*100)
+    print("Match rate: {}".format(match_rate))
+    
+    with open(args.qa_save_dir + "/filtered_"+match_rate+"_"+name, "w") as fout:
+        json.dump(matched, fout, indent=2)
+    
+    with open(args.qa_save_dir + "/wrong_"+match_rate+"_"+name, "w") as fout:
+        json.dump(unmatched, fout, indent=2)
+    
 
 
 if __name__ == '__main__':
@@ -124,6 +219,7 @@ if __name__ == '__main__':
     model_args.add_argument("--top_p", type=float, default=None)
     model_args.add_argument("--top_k", type=int, default=None)
     model_args.add_argument("--temperature",type=float, default=1.0, help=" Temperature ")
+    model_args.add_argument("--num_return_sequences", type=int, default=1)
     model_args.add_argument("--qa_save_dir", type=str, default="aug_results")
 
     """Logging related arguments"""
@@ -139,4 +235,5 @@ if __name__ == '__main__':
     # Load pretrained models
     config, tokenizer, backbone = load_T5_backbone(args)
 
-    candidates = generate_QA_from_explanation(backbone, tokenizer, args=args)
+    candidates, model = generate_QA_from_explanation(backbone, tokenizer, args=args)
+    answer_based_filtering(candidates, model, tokenizer, args)
