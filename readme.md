@@ -41,7 +41,6 @@ nocaps
 <validation set, test set>
 ~~~bash
 wget https://nocaps.s3.amazonaws.com/nocaps_val_4500_captions.json
-wget https://s3.amazonaws.com/nocaps/nocaps_test_image_info.json
 ~~~
 Localized Narratives
 <train image set(10), validation image set , test image set, train caption set, validation caption set, test caption set >
@@ -54,3 +53,5 @@ wget https://storage.googleapis.com/localized-narratives/annotations/open_images
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
 ~~~
 
+COCO-caption\
+https://github.com/tylin/coco-caption.git
