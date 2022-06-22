@@ -7,44 +7,57 @@
 # cd ..
 
 # VizWiz visual question answering dataset <training set, validation set, test set, and annotations>
-mkdir vizwiz
-cd vizwiz
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/train.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/val.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/images/test.zip
-wget https://ivc.ischool.utexas.edu/VizWiz_final/vqa_data/Annotations.zip
-cd ..
+# mkdir vizwiz
+# cd vizwiz
+# wget https://ivc.ischool.utexas.edu/VizWiz_final/images/train.zip
+# wget https://ivc.ischool.utexas.edu/VizWiz_final/images/val.zip
+# wget https://ivc.ischool.utexas.edu/VizWiz_final/images/test.zip
+# wget https://ivc.ischool.utexas.edu/VizWiz_final/vqa_data/Annotations.zip
+# cd ..
 
 # ReferIT dataset <train dataset, test dataset>
-mkdir referit
-cd referit
-wget http://tamaraberg.com/referitgame/ReferitData.zip
-wget http://tamaraberg.com/referitgame/test_set_ground_truth.zip_ga=2.234395421.-20118413.1607637118
-cd ..
+# mkdir referit
+# cd referit
+# wget http://tamaraberg.com/referitgame/ReferitData.zip
+# wget http://tamaraberg.com/referitgame/test_set_ground_truth.zip_ga=2.234395421.-20118413.1607637118
+# cd ..
 
 # nocaps <validation set, test set>
 mkdir nocaps
 cd nocaps
+mkdir annotations
+mkdir image
+mkdir obj_detection
+cd annotations
 wget https://nocaps.s3.amazonaws.com/nocaps_val_4500_captions.json
-wget https://s3.amazonaws.com/nocaps/nocaps_test_image_info.json
-cd ..
+cd ../..
 
 # Localized Narratives <train image set(10), validation image set , test image set, train caption set, validation caption set, test caption set >
 mkdir narratives
 cd narratives
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00000-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00001-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00002-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00003-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00004-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00005-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00006-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00007-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00008-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_localized_narratives-00009-of-00010.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_validation_localized_narratives.jsonl
-gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_test_localized_narratives.jsonl
+mkdir annotations
+mkdir image
+mkdir obj_detection
+cd annotationss
 gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_train_v6_captions.jsonl
 gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_validation_captions.jsonl
 gdown https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
+cd ../..
+
+# cococaption
+mkdir cococaption
+cd cococaption
+mkdir image
+mkdir obj_detection
+git clone https://github.com/tylin/coco-caption.git
+cd coco-caption
+cp -r annotations ../
+cd ../..
+
+# Flickr30k
+mkdir flickr30k
+cd flickr30k
+mkdir annotations
+mkdir image
+mkdir obj_detection
 cd ..
