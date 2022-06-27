@@ -15,6 +15,13 @@ import jsonlines
 
 # pip install jsonlines
 
+def load_detection_model():
+    feature_extractor = DetrFeatureExtractor.from_pretrained('facebook/detr-resnet-101-dc5')
+    model = DetrForObjectDetection.from_pretrained('facebook/detr-resnet-101-dc5')
+    id2label = model.config.id2label
+
+    return feature_extractor, model, id2label
+
 
 # colors for visualization
 COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
@@ -84,7 +91,33 @@ def get_detected_objs(probs, id2label):
     return prefix + ", ".join(detected_str) if detected_obj_cnt > 0 else ""
 
 
-def VQA_X_obj_labeling(model, id2label, args):
+def get_object_labels(captions, args):
+    feature_extractor, model, id2label = load_detection_model()
+    model = model.to(args.gpu_id)
+
+    labels = {}
+    for img_name, caps in tqdm(captions.items()):
+        if img_name[-4:]!=".jpg":
+            img_name = img_name + ".jpg"
+
+        img_path = os.path.join(args.image_dir, img_name)
+        image = Image.open(img_path).convert("RGB")
+        inputs = feature_extractor(images=image, return_tensors="pt")
+        inputs = inputs.to(args.gpu_id)
+        outputs = model(**inputs)
+
+        # keep only predictions with 0.7+ confidence
+        probas = outputs['logits'].softmax(-1)[0, :, :-1]
+        keep = probas.max(-1).values > 0.7
+
+        label = get_detected_objs(probas[keep], id2label)
+
+        labels[img_name] = {"obj_label": label, "captions": caps}
+
+    return labels
+
+
+def vqa_x_obj_labeling(args):
     """
     image_dir: images/train2014 | images/val2014
     anno_path: nle_anno/VQA-X/vqaX_train.json | nle_anno/VQA-X/vqaX_val.json
@@ -93,58 +126,102 @@ def VQA_X_obj_labeling(model, id2label, args):
     anno = json.load(open(args.anno_path, "r"))
     ids_list = list(anno.keys())
 
-    labels = {}
-    for i in tqdm(range(len(anno))):
-        question_id = ids_list[i]
-        sample = anno[question_id]
-        img_name = sample["image_name"]
+    img_list = []
+    for i in range(len(anno)):
+        q_id = ids_list[i]
+        sample = anno[q_id]
+        img_list.append(sample["image_name"])
 
-        img_path = os.path.join(args.image_dir, img_name)
-        image = Image.open(img_path).convert("RGB")
-        inputs = feature_extractor(images=image, return_tensors="pt")
+    return get_object_labels(img_list, args)
 
-        inputs = inputs.to(args.gpu_id)
-        outputs = model(**inputs)
 
-        # keep only predictions with 0.7+ confidence
-        probas = outputs['logits'].softmax(-1)[0, :, :-1]
-        keep = probas.max(-1).values > 0.7
-
-        label = get_detected_objs(probas[keep], id2label)
-
-        labels[img_name] = label
-
-    return labels
-
-def captioning_obj_labeling(model, id2label, img_lst, args):
+def nocaps_obj_labeling(args):
     """
-    image_dir: nocaps/image
-    anno_path: 
-    save_path: 
+    image_dir: captioning_data/nocaps/image
+    anno_path: captioning_data/nocaps/annotations/nocaps_val_4500_captions.json
+    save_path: captioning_data/nocaps/obj_labels/nocaps.json
     """
+    # image downloading form URL
+    id_to_img_name = {}
+    download = len(os.listdir(args.image_dir))==0
+    anno = json.load(open(args.anno_path, "r"))
+    for img in tqdm(anno["images"]):
+        if download:
+            filename = os.path.join(args.image_dir, img["file_name"])
+            url = img["coco_url"]
+            try:
+                urllib.request.urlretrieve(url, filename)
+            except:
+                print("Fail to download", url)
+        
+        id_to_img_name[img["id"]] = img["file_name"]
 
-    labels = {}
-    for img_id in tqdm(img_lst):
+    captions = {}
+    for sample in anno["annotations"]:
+        key = id_to_img_name[sample["image_id"]]
+        if key in captions:
+            captions[key].append(sample["caption"])
+        else:
+            captions[key] = [sample["caption"]]
 
-        img_name = img_id + ".jpg"
+    return get_object_labels(captions, args)
 
-        img_path = os.path.join(args.image_dir, img_name)
-        image = Image.open(img_path).convert("RGB")
-        inputs = feature_extractor(images=image, return_tensors="pt")
 
-        inputs = inputs.to(args.gpu_id)
-        outputs = model(**inputs)
+def narratives_obj_labeling(args):
+    """
+    image_dir: captioning_data/narratives/image/validation
+    anno_path: captioning_data/narratives/annotations/open_images_validation_captions.jsonl
+    save_path: captioning_data/narratives/obj_labels
+    """
+    annotation_dict = {}
+    with jsonlines.open(args.anno_path) as f:
+        for line in tqdm(f.iter()):
+            img_id = line["image_id"]
+            caption = line["caption"]
+            annotation_dict[img_id] = caption
+    ids_list = list(annotation_dict.keys())
 
-        # keep only predictions with 0.7+ confidence
-        probas = outputs['logits'].softmax(-1)[0, :, :-1]
-        keep = probas.max(-1).values > 0.7
+    return get_object_labels(ids_list, args)
 
-        label = get_detected_objs(probas[keep], id2label)
 
-        labels[img_name] = label
+def flickr30k_obj_labeling(args):
+    """
+    image_dir: captioning_data/flickr30k/image
+    anno_path: captioning_data/flickr30k/annotations/results_20130124.token
+    save_path: captioning_data/flickr30k/obj_labels
+    """
+    captions = {}
+    with open(args.anno_path, "r", ) as f:
+        anno = f.readlines()
+    for sample in anno:
+        img_id, caption = re.split(r"#\d\t",sample)
+        if img_id in captions:
+            captions[img_id].append(caption[:-1])
+        else:
+            captions[img_id] = [caption[:-1]]
 
-    return labels
+    return get_object_labels(captions, args)
 
+
+def coco_obj_labeling(args):
+    """
+    image_dir: images/[train2014|val2014]
+    anno_path: captioning_data/coco/annotations/captions_[train|val]2014.json
+    save_path: captioning_data/coco/obj_labels
+    """
+    prepend = "COCO_val2014_" if "val" in args.anno_path else "COCO_train2014_"
+    anno = json.load(open(args.anno_path, "r"))
+    captions = {}
+    for sample in anno["annotations"]:
+        image_id = str(sample["image_id"])
+        # 12345 -> COCO_val2014_000000012345
+        image_name = prepend + (12 - len(image_id)) * '0' + image_id
+        if image_name in captions:
+            captions[image_name].append(sample["caption"])
+        else:
+            captions[image_name] = [sample["caption"]]
+        
+    return get_object_labels(captions, args)
 
 
 if __name__=="__main__":
@@ -152,9 +229,8 @@ if __name__=="__main__":
     parser.add_argument("--dataset_name", type=str, required=True, help="vqax|nocaps|narratives|flickr30k|coco_caption")
     parser.add_argument("--image_dir", type=str, required=True)
     parser.add_argument("--save_path", type=str, required=True)
-    parser.add_argument("--anno_path", type=str, default=None)
+    parser.add_argument("--anno_path", type=str, required=True, help="Path to explanation label file")
     parser.add_argument("--gpu_id", type=int, default=1)
-    parser.add_argument("--img_download", action="store_true", help= "just for nocaps image dataset")
     
     args = parser.parse_args()
 
@@ -167,93 +243,23 @@ if __name__=="__main__":
     if args.dataset_name=="vqax":
         if args.anno_path is None:
             raise ValueError("VQA-X needs annotation path for image_id")
-        labels = VQA_X_obj_labeling(model, id2label, args)
+        labels = vqa_x_obj_labeling(args)
 
     # nocaps captioning dataset
     elif args.dataset_name=="nocaps":
-        # image downloading form URL
-        id_file = {}
-        ids_list = []
-
-        anno = json.load(open(args.anno_path, "r"))
-        for img in tqdm(anno["images"]):
-            # URL -> *.jpg
-            if args.img_download:
-                file_name = os.path.join(args.image_dir, img["file_name"])
-                url = img["coco_url"]
-                try:
-                    urllib.request.urlretrieve(url, file_name)
-                except:
-                    print(img)
-            img_id = img["open_images_id"]
-            id_file[img["id"]] = img_id
-            ids_list.append(img_id)
-
-        labels = captioning_obj_labeling(model, id2label, ids_list, args)
-
-        for ann in tqdm(anno["annotations"]):
-            ann_id = ann["image_id"]
-            ann["image_id"] = id_file[ann_id]
-        
-        # Modify image id in annotations
-        new_annotation_path = args.anno_path.split(".")[0] + "_caption.json"
-        with open(args.anno_path, "w") as fout:
-            json.dump(anno, fout, indent=2)
+        labels = nocaps_obj_labeling(args)
 
     # Localized narratives captioning dataset
     elif args.dataset_name=="narratives":
-        annotation_dict = {}
-        with jsonlines.open(args.anno_path) as f:
-            for line in tqdm(f.iter()):
-                img_id = line["image_id"]
-                caption = line["caption"]
-                annotation_dict[img_id] = caption
-        ids_list = list(annotation_dict.keys())
-
-        labels = captioning_obj_labeling(model, id2label, ids_list, args)
-        
-        # annotation datset updating
-        new_annotation_path = args.anno_path.split(".")[0] + "_caption.json"
-        with open(new_annotation_path, "w") as fout:
-            json.dump(annotation_dict, fout, indent=2)
-            
+        labels = narratives_obj_labeling(args)            
             
     # Flickr30k captioning dataset
     elif args.dataset_name == "flickr30k":
-    
-        annotation_dict = defaultdict(list)
-        with open(args.anno_path, "r", ) as f:
-            annotation = f.readlines()
-        for anno in annotation:
-            img_id, caption = re.split(r"#\d\t",anno)
-            annotation_dict[img_id[:-4]].append(caption[:-1])
-        ids_list = list(annotation_dict.keys())
-
-        labels = captioning_obj_labeling(model, id2label, ids_list, args)
-        
-        # *.token -> *.json
-        # {img_id : captioning list}
-        new_annotation_path = args.anno_path.split(".")[0] + "_caption.json"
-        with open(new_annotation_path, "w") as fout:
-            json.dump(annotation_dict, fout, indent=2)
+        labels = flickr30k_obj_labeling(args)
             
     # COCO captioning dataset
-    elif args.dataset_name=="coco_caption":
-        
-        anno = json.load(open(args.anno_path, "r"))
-        annotation_dict = defaultdict(list)
-        for annotation in anno["annotations"]:
-            # 12345 -> COCO_val2014_000000012345
-            image_name = "COCO_val2014_" + (12 - len(str(annotation["image_id"]))) * '0' + str(annotation["image_id"])
-            annotation_dict[image_name].append(annotation["caption"])
-            
-        ids_list = list(annotation_dict.keys())
-        labels = captioning_obj_labeling(model, id2label, ids_list, args)
-        
-        # annotation datset updating
-        new_annotation_path = args.anno_path.split(".")[0]+"_caption.json"
-        with open(new_annotation_path, "w") as fout:
-            json.dump(annotation_dict, fout, indent=2)            
+    elif args.dataset_name=="coco":
+        labels = coco_obj_labeling(args)
     else:
         raise NotImplementedError
     

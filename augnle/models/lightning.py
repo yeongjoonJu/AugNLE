@@ -29,8 +29,7 @@ class PromptTuning(LightningModule):
             self.warmup_steps=  self.cfg.warmup_steps
             self.weight_decay=  self.cfg.weight_decay
         else:
-            self.use_prompt_A = True
-            self.use_prompt_B = False
+            self.set_prompt_A()
 
         self.eos_token_id = tokenizer.eos_token_id
         
@@ -40,20 +39,31 @@ class PromptTuning(LightningModule):
         self.change_requires_grad(self.model, False)
         self.change_requires_grad(self.model.prefix_encoder_A, True)
         self.change_requires_grad(self.model.prefix_encoder_B, True)
+        # self.change_requires_grad(self.model.prefix_encoder_C, True)
 
     def set_prompt_A(self):
         # for inference
         self.use_prompt_A = True
         self.use_prompt_B = False
+        # self.use_prompt_C = False
 
     def set_prompt_B(self):
         # for inference
         self.use_prompt_A = False
         self.use_prompt_B = True
+        # self.use_prompt_C = False
+
+    # def set_prompt_C(self):
+    #     # for inference
+    #     self.use_prompt_A = False
+    #     self.use_prompt_B = False
+    #     self.use_prompt_C = True
     
     def class_label_initialization(self, class_idx_A, class_idx_B):
         class_idx_A = torch.LongTensor(class_idx_A)
         class_idx_B = torch.LongTensor(class_idx_B)
+        # class_idx_C = torch.LongTensor(class_idx_C)
+        # self.model.class_label_initialization(class_idx_A, class_idx_B, class_idx_C)
         self.model.class_label_initialization(class_idx_A, class_idx_B)
     
     def change_requires_grad(self, model, req_grad):
@@ -81,7 +91,6 @@ class PromptTuning(LightningModule):
         loss = outputs.loss
 
         self.log("prompt_train_loss", loss)
-
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -101,6 +110,7 @@ class PromptTuning(LightningModule):
                                     return_dict=False,
                                     prompting_A=self.use_prompt_A,
                                     prompting_B=self.use_prompt_B,
+                                    # prompting_C=self.use_prompt_C,
                                     encoder_only=True)
         if isinstance(encoder_outputs, tuple):
             last_hidden_state = encoder_outputs[0]
@@ -139,15 +149,18 @@ class PromptTuning(LightningModule):
             inp = inputs[n]
             inp = inp[:inp.index(self.eos_token_id)]
             decoded_inp = self.tokenizer.decode(inp, clean_up_tokenization_spaces=True)
-            if self.cfg.num_return_sequences > 1:
-                decoded_out = []
-                for sample in out:
-                    sample = sample[1:sample.index(self.eos_token_id)]
-                    sample = self.tokenizer.decode(sample, clean_up_tokenization_spaces=True)
-                    if not sample in decoded_out:
-                        decoded_out.append(sample)
-            else:
-                out = out[1:out.index(self.eos_token_id)]
+            try:
+                if self.cfg.num_return_sequences > 1:
+                    decoded_out = []
+                    for sample in out:
+                        sample = sample[1:sample.index(self.eos_token_id)]
+                        sample = self.tokenizer.decode(sample, clean_up_tokenization_spaces=True)
+                        if not sample in decoded_out:
+                            decoded_out.append(sample)
+                else:
+                    out = out[1:out.index(self.eos_token_id)]
+                decoded_out = self.tokenizer.decode(out, clean_up_tokenization_spaces=True)
+            except ValueError as e:
                 decoded_out = self.tokenizer.decode(out, clean_up_tokenization_spaces=True)
             
             if labels is not None:
@@ -155,9 +168,11 @@ class PromptTuning(LightningModule):
                 label = label[:label.index(self.eos_token_id)]
                 decoded_label = self.tokenizer.decode(label, clean_up_tokenization_spaces=True)
             
-            decoded = {"input":decoded_inp, "output":decoded_out}
+            decoded = {"input":decoded_inp, "output":decoded_out, "img_name": batch["img_names"][n]}
             if labels is not None:
                 decoded.update({"label": decoded_label})
+            if "objects" in batch:
+                decoded.update({"objects": batch["objects"][n]})
 
             decodeds.append(decoded)
         
