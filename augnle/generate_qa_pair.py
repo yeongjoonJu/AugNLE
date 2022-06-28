@@ -196,8 +196,8 @@ def answer_based_filtering(candidates, model, tokenizer, args):
     args.inference = True
     args.temperature = 1.0
     args.num_return_sequences = 1
-    args.top_k = None
-    args.top_p = None
+    args.top_k = 0
+    args.top_p = 0.95
     model.set_prompt_B()
 
     trainer = Trainer(accelerator="gpu", gpus=1)

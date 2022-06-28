@@ -96,23 +96,31 @@ def get_object_labels(captions, args):
     model = model.to(args.gpu_id)
 
     labels = {}
-    for img_name, caps in tqdm(captions.items()):
-        if img_name[-4:]!=".jpg":
-            img_name = img_name + ".jpg"
+    img_ids = list(captions.keys())
+    num_imgs = len(img_ids)
+    for b in tqdm(range(0, num_imgs, args.batch_size)):
+        # Construct batch image
+        batch_image = []
+        n_items = args.batch_size if num_imgs-(b+args.batch_size) >= 0 else num_imgs-b
+        for i in range(n_items):
+            img_name = img_ids[b*args.batch_size+i]
+            if img_name[-4:]!=".jpg":
+                img_name = img_name + ".jpg"
+            img_path = os.path.join(args.image_dir, img_name)
+            batch_image.append(Image.open(img_path).convert("RGB"))
 
-        img_path = os.path.join(args.image_dir, img_name)
-        image = Image.open(img_path).convert("RGB")
-        inputs = feature_extractor(images=image, return_tensors="pt")
+        inputs = feature_extractor(images=batch_image, return_tensors="pt")
         inputs = inputs.to(args.gpu_id)
         outputs = model(**inputs)
 
         # keep only predictions with 0.7+ confidence
-        probas = outputs['logits'].softmax(-1)[0, :, :-1]
-        keep = probas.max(-1).values > 0.7
-
-        label = get_detected_objs(probas[keep], id2label)
-
-        labels[img_name] = {"obj_label": label, "captions": caps}
+        batch_probas = outputs['logits'].softmax(-1)
+        for i in range(n_items):
+            img_name = img_ids[b*args.batch_size+i]
+            probas = batch_probas[i,:,:-1]
+            keep = probas.max(-1).values > 0.7
+            label = get_detected_objs(probas[keep], id2label)
+            labels[img_name] = {"obj_label": label, "captions": captions[img_name]}
 
     return labels
 
@@ -173,15 +181,12 @@ def narratives_obj_labeling(args):
     anno_path: captioning_data/narratives/annotations/open_images_validation_captions.jsonl
     save_path: captioning_data/narratives/obj_labels
     """
-    annotation_dict = {}
+    captions = {}
     with jsonlines.open(args.anno_path) as f:
         for line in tqdm(f.iter()):
-            img_id = line["image_id"]
-            caption = line["caption"]
-            annotation_dict[img_id] = caption
-    ids_list = list(annotation_dict.keys())
+            captions[line["image_id"]] = line["caption"]
 
-    return get_object_labels(ids_list, args)
+    return get_object_labels(captions, args)
 
 
 def flickr30k_obj_labeling(args):
@@ -231,11 +236,12 @@ if __name__=="__main__":
     parser.add_argument("--save_path", type=str, required=True)
     parser.add_argument("--anno_path", type=str, required=True, help="Path to explanation label file")
     parser.add_argument("--gpu_id", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=1)
     
     args = parser.parse_args()
 
-    feature_extractor = DetrFeatureExtractor.from_pretrained('facebook/detr-resnet-101-dc5')
-    model = DetrForObjectDetection.from_pretrained('facebook/detr-resnet-101-dc5')
+    feature_extractor = DetrFeatureExtractor.from_pretrained('facebook/detr-resnet-50-dc5')
+    model = DetrForObjectDetection.from_pretrained('facebook/detr-resnet-50-dc5')
     model = model.to(args.gpu_id)
     id2label = model.config.id2label
 
