@@ -101,7 +101,7 @@ def get_object_labels(captions, args):
     for b in tqdm(range(0, num_imgs, args.batch_size)):
         # Construct batch image
         batch_image = []
-        n_items = args.batch_size if num_imgs-(b+args.batch_size) > 0 else num_imgs-1-b
+        n_items = args.batch_size if num_imgs-(b+args.batch_size) >= 0 else num_imgs-b
         for i in range(n_items):
             img_name = img_ids[b*args.batch_size+i]
             if img_name[-4:]!=".jpg":
@@ -236,7 +236,7 @@ if __name__=="__main__":
     parser.add_argument("--save_path", type=str, required=True)
     parser.add_argument("--anno_path", type=str, required=True, help="Path to explanation label file")
     parser.add_argument("--gpu_id", type=int, default=1)
-    parser.add_argument("--batch_size", type=int, default=2)
+    parser.add_argument("--batch_size", type=int, default=1)
     
     args = parser.parse_args()
 
