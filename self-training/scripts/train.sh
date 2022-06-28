@@ -21,6 +21,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python ../trainer.py \
 --gradient_accumulation_steps 1 \
 --fewshot_ratio 0 \
 --val_check_interval 1.0 \
---output_dir "outputs" \
+--output_dir "pseudo_output" \
 --temperature 1 \
 --iteration 10 \
