@@ -10,6 +10,29 @@ from transformers.modeling_utils import Conv1D
 from typing import Tuple
 
 
+class NLX_GPT(nn.Module):
+    def __init__(self, visual_backbone, lm_backbone):
+        super().__init__()
+        self.visual_encoder = visual_backbone
+        self.lm = lm_backbone
+
+    def forward(self, image, input_ids, segment_ids):
+        img_embeddings = self.visual_encoder.encode_image(image).float()
+
+        outputs = self.lm(input_ids=input_ids,
+                                past_key_values=None,
+                                attention_mask=None,
+                                token_type_ids=segment_ids,
+                                position_ids=None,
+                                encoder_hidden_states=img_embeddings,
+                                encoder_attention_mask=None,
+                                labels=None,
+                                use_cache=False,
+                                return_dict=True)
+        
+        return outputs.logits[:,-1,:]
+        
+
 class GPT2Attention(nn.Module):
     def __init__(self, config, is_cross_attention=False):
         super().__init__()
