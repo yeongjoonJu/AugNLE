@@ -214,8 +214,10 @@ class VQAX_ST_DataModule(BaseDataModule):
                 # Set image directory
                 if mode=="train":
                     img_dir = self.cfg.image_dir + "/train2014"
+                    file_path = "train2014"
                 else:
                     img_dir = self.cfg.image_dir + "/val2014"
+                    file_path = "val2014"
                 
                 for i in tqdm(range(len(anno)), desc= f"Processing {data_name} {stage}-{mode} data"):
                     question_id = ids_list[i]
@@ -227,7 +229,8 @@ class VQAX_ST_DataModule(BaseDataModule):
                     exp_idx = index_tracker[question_id]
                     explain_txt = sample['explanation'][exp_idx]
                     img_pth = os.path.join(img_dir,img_name)
-
+                    img_name = os.path.join(file_path,img_name)
+                    
                     # if one more explanations
                     if exp_idx > 0:
                         index_tracker[question_id] -= 1    # decrease usage
@@ -235,8 +238,7 @@ class VQAX_ST_DataModule(BaseDataModule):
                     # Preprocessing dataset
                     input_ids, segment_ids, labels, img = \
                         self.preprocessing(img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
-                    
-                    datasets.append({"qid": [image_id], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})    
+                    datasets.append({"qid": [img_name], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})  
                     
             # Captioning dataset
             elif data_name == "nocaps":

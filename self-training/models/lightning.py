@@ -13,6 +13,14 @@ from modules import ImageEncoder
 from gpt import GPT2LMHeadModel
 from utils import top_filtering, filter_and_get_scores
 import os
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+from PIL import Image
+import os 
+import torchvision.transforms as transforms
+import logging
+logger = logging.getLogger(__name__)
+from tqdm import tqdm
 
 class Self_training(LightningModule):
     def __init__(
@@ -64,15 +72,16 @@ class Self_training(LightningModule):
         return self.model(**inputs)
 
     def training_step(self,  batch, batch_idx):
-        _, input_ids, labels, segment_ids,  img = batch.values()
-        image_embedding = self.image_encoder(img)
+        qid, input_ids, labels, segment_ids,  img = batch.values()
+        # image_embedding = self.image_encoder(img)
+        img_emb = self.image_embedding(qid)
 
         outputs = self(input_ids=input_ids,
                         past_key_values=None, 
                         attention_mask=None, 
                         token_type_ids=segment_ids, 
                         position_ids=None,
-                        encoder_hidden_states=image_embedding, 
+                        encoder_hidden_states=img_emb, 
                         encoder_attention_mask=None, 
                         labels=labels, 
                         use_cache=False, 
@@ -85,15 +94,16 @@ class Self_training(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        _, input_ids, labels, segment_ids,  img = batch.values()
+        qid, input_ids, labels, segment_ids,  img = batch.values()
         image_embedding = self.image_encoder(img)
+        img_emb = self.image_embedding(qid)
 
         outputs = self(input_ids=input_ids,
                         past_key_values=None, 
                         attention_mask=None, 
                         token_type_ids=segment_ids, 
                         position_ids=None,
-                        encoder_hidden_states=image_embedding, 
+                        encoder_hidden_states=img_emb, 
                         encoder_attention_mask=None, 
                         labels=labels, 
                         use_cache=False, 
@@ -108,7 +118,9 @@ class Self_training(LightningModule):
     
     def predict_step(self, batch, batch_idx):
         qid, input_ids, labels, segment_ids,  img = batch.values()
-        image_embedding = self.image_encoder(img)
+        # image_embedding = self.image_encoder(img)
+        img_emb = self.image_embedding(qid)
+        
         because_token = self.tokenizer.convert_tokens_to_ids('Ġbecause')
         max_len = 20
         always_exp = False
@@ -123,7 +135,7 @@ class Self_training(LightningModule):
                             attention_mask=None, 
                             token_type_ids=segment_ids, 
                             position_ids=None, 
-                            encoder_hidden_states=image_embedding, 
+                            encoder_hidden_states=img_emb, 
                             encoder_attention_mask=None, 
                             labels=None, 
                             use_cache=False, 
@@ -169,6 +181,35 @@ class Self_training(LightningModule):
         
         return decodeds
 
+
+    def image_embedding(self,qid):
+        img_file = qid[0][0].split("/")[0]
+        cached_filename = f"{img_file}.cache"
+        image_file = os.path.join(self.hparams.cached_dir,cached_filename)
+        # caching loading
+        if os.path.exists(image_file):
+            img_dict = torch.load(image_file)
+        else:
+            img_dict = self.img_caching(os.path.join(self.hparams.image_dir,img_file))
+            
+        for idx, img_id in enumerate(qid):    
+            if idx == 0:
+                img = img_dict[img_id[0]]
+            else:
+                img = torch.stack(img,img_dict[img_id[0]])
+        img.to(torch.cuda.current_device())
+        return img
+            
+    def img_caching(self,img_dir):
+        file_lst = os.listdir(img_dir)
+        emb_dict = {}
+        for file in tqdm(file_lst, desc= f"Processing image..."):
+            file_pth = os.path.join(img_dir, file)
+            img = Image.open(file_pth).convert('RGB')
+            img = self.img_transform(img).unsqueeze(0).to(torch.cuda.current_device())
+            img_emb = self.image_encoder(img)
+            emb_dict[file]= img_emb
+        return emb_dict
 
     def test_step(self,batch,batch_idx):
         qid, input_ids, labels, segment_ids,  img = batch.values()
