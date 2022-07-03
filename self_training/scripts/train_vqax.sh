@@ -5,11 +5,11 @@
 # "../captioning_data/nocaps/image" \
 CKPT_DIR="./ckpts"
 
-CUDA_VISIBLE_DEVICES=0 python trainer.py \
+CUDA_VISIBLE_DEVICES=1 python trainer.py \
 --mode train \
---cached_dir cached/nlx_gpt_base \
---experiment_name nlx_gpt_base_b32 \
---max_epochs 30 \
+--cached_dir cached/self_e_base \
+--experiment_name self_e_base_b32 \
+--max_epochs 1 \
 --ngpu 1 \
 --warmup_steps 0 \
 --checkpoints_dir ${CKPT_DIR} \

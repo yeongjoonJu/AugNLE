@@ -132,17 +132,21 @@ class BaseDataset(Dataset):
         self.e_seg_id = e_segment_id
         self.answer_split = self.tokenizer(" the answer is ").input_ids
         self.reason_split = self.tokenizer(" because ").input_ids
+        self.question_split = self.tokenizer("?").input_ids[0]
+        mode = "teacher" if teacher_mode else "student"
 
         # Load cache
-        cached_path = os.path.join(self.cfg.cached_dir, "total.cache")
+        cached_path = os.path.join(self.cfg.cached_dir, f"total_{mode}.cache")
         if os.path.exists(cached_path):
             logger.info("Loading features from cached file %s", cached_path)
             self.datasets = torch.load(cached_path)
-            with open(os.path.join(self.cfg.cached_dir, "nle_ids_data.json"), "r") as fin:
+            with open(os.path.join(self.cfg.cached_dir, f"nle_ids_data.json"), "r") as fin:
                 self.nle_ids_data = json.load(fin)
             if include_captioning:
-                with open(os.path.join(self.cfg.cached_dir, "relabeled_ids_data.json"), "r") as fin:
+                with open(os.path.join(self.cfg.cached_dir, f"relabeled_ids_data.json"), "r") as fin:
                     self.relabeled_ids_data = json.load(fin)
+            else:
+                self.relabeled_ids_data = []
         else:
             # Captioning data
             if include_captioning:
@@ -164,11 +168,11 @@ class BaseDataset(Dataset):
                 os.mkdir(self.cfg.cached_dir)
 
             # Caching            
-            torch.save(self.datasets, os.path.join(self.cfg.cached_dir, "total.cache"))
-            with open(os.path.join(self.cfg.cached_dir, "nle_ids_data.json"), "w") as fout:
+            torch.save(self.datasets, cached_path)
+            with open(os.path.join(self.cfg.cached_dir, f"nle_ids_data.json"), "w") as fout:
                 json.dump(self.nle_ids_data, fout, indent=2)
             if self.relabeled_ids_data:
-                with open(os.path.join(self.cfg.cached_dir, "relabeled_ids_data.json"), "w") as fout:
+                with open(os.path.join(self.cfg.cached_dir, f"relabeled_ids_data.json"), "w") as fout:
                     json.dump(self.relabeled_ids_data, fout, indent=2)
     
     def get_collate_fn(self):
@@ -201,11 +205,44 @@ class BaseDataset(Dataset):
         
         return collate_wrapper
 
+    def __getitem__(self, index):
+        sample = self.datasets[index]
+        return sample["input_ids"], sample["labels"], sample["segment_ids"], sample["img"], sample["image_path"]
+    
+    def __len__(self):
+        return len(self.datasets)
+
     def get_dataset(self, image_dir, anno, include_captioning=False):
+        raise NotImplementedError
+
+    def preprocess(self, img_path, question_ids, answer_ids, explanation_ids):
         raise NotImplementedError
 
     def get_relabeled_targets(self):
         raise self.relabeled_ids_data
+
+    def change_mode(self, mode):
+        if (self.teacher_mode and mode=="teacher") or (not self.teacher_mode and mode=="student"):
+            return
+        if mode=="teacher":
+            self.teacher_mode = True
+        else:
+            self.teacher_mode = False
+
+        cached_path = os.path.join(self.cfg.cached_dir, f"total_{mode}.cache")
+        if os.path.exists(cached_path):
+            logger.info("Loading features from cached file %s", cached_path)
+            self.datasets = torch.load(cached_path)
+        else:
+            # Preprocessing dataset
+            print(len(self.nle_ids_data), len(self.relabeled_ids_data))
+            self.datasets = []
+            for sample in tqdm(self.nle_ids_data+self.relabeled_ids_data, desc=f"Changing to {mode} mode"):
+                input_ids, segment_ids, labels, img = self.preprocess(
+                    sample["image_path"], sample["question"], sample["answer"], sample["explain"])
+                self.datasets.append({"image_path": sample["image_path"], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})
+            
+            torch.save(self.datasets, cached_path)
 
 
 class VQAX_full_shot_Dataset(BaseDataset):
@@ -265,13 +302,14 @@ class VQAX_full_shot_Dataset(BaseDataset):
 
         if self.teacher_mode:
             input_ids = question_ids.copy()
+            input_ids.append(self.question_split)
             input_ids.extend(self.answer_split.copy())
             input_ids.extend(answer_ids)
             output = [self.tokenizer.bos_token_id]
             output.extend(self.reason_split.copy())
             output.extend(explanation_ids)
             output.append(self.tokenizer.eos_token_id)
-            segment_ids = [self.q_seg_id]*len(question_ids)
+            segment_ids = [self.q_seg_id]*(len(question_ids)+1)
             segment_ids.extend([self.a_seg_id]*(len(answer_ids)+len(self.answer_split)))
             segment_ids.extend([self.e_seg_id]*len(output))
         else:
@@ -300,12 +338,6 @@ class VQAX_full_shot_Dataset(BaseDataset):
         
         return input_ids, segment_ids, labels, img
 
-    def __getitem__(self, index):
-        sample = self.datasets[index]
-        return sample["input_ids"], sample["labels"], sample["segment_ids"], sample["img"], sample["image_path"]
-    
-    def __len__(self):
-        return len(self.datasets)
 
 
 # class VQAX_few_shot_DataModule(BaseDataModule):

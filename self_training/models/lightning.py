@@ -28,6 +28,7 @@ class NLX_GPT(LightningModule):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.tokenizer = tokenizer
+        self.mode = None
 
         config = AutoConfig.from_pretrained('distilgpt2')
 
@@ -102,7 +103,7 @@ class NLX_GPT(LightningModule):
         loss = outputs.loss
             
         # self.log(f"{self.hparams.selfe_mode}_train_loss", loss)
-        self.log("train_loss", loss)
+        self.log(f"{self.mode}_train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -121,7 +122,7 @@ class NLX_GPT(LightningModule):
         
         loss = outputs.loss
         # self.log(f"{self.hparams.selfe_mode}_val_loss", loss)
-        self.log("val_loss", loss)
+        self.log(f"{self.mode}_val_loss", loss)
 
         return loss
 
@@ -129,7 +130,7 @@ class NLX_GPT(LightningModule):
         img, img_id, input_ids, segment_ids = batch
         image_embedding = self.image_encoder(img)
         
-        max_len = 20
+        max_len = 40
         always_exp = False
         no_sample = True
         current_output = []

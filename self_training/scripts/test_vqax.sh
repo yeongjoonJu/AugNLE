@@ -4,7 +4,7 @@ CKPT_DIR="./ckpts"
 CUDA_VISIBLE_DEVICES=0 python trainer.py \
 --mode test \
 --output_dir outputs/base_b32 \
---load_ckpt_path ckpts/nlx_gpt_base_b32/epoch=29-val_loss=0.695.ckpt \
+--load_ckpt_path ckpts/nlx_gpt_base_b32/epoch=29-val_loss=0.693.ckpt \
 --eval_batch_size 1 \
 --ngpu 1 \
 --img_size 224 \
