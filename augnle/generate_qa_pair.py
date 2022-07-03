@@ -217,8 +217,8 @@ def answer_based_filtering(candidates, model, tokenizer, args):
             question, reason = data["input"].split("? reason: ")
             matched.append({
                 "question": question,
-                "reason": reason,
-                "answer": data["output"],
+                "reason": reason[len("because"):].strip(),
+                "answer": data["output"].replace("the answer is", "").strip(),
                 "img_name": data["img_name"],
                 "objects": data["objects"]
             })
@@ -248,7 +248,7 @@ def decode_input_to_QAE(text):
     else:
         reason = text[0]
         objects = ""
-
+    
     return {"question": q, "answer": a.strip(), "reason": reason.strip(), "objects":objects.strip()}
 
 

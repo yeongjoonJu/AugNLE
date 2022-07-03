@@ -16,7 +16,7 @@ class ImageEncoder(nn.Module):
 
     def __init__(self, device):
         super(ImageEncoder, self).__init__()
-        self.encoder, _ = clip.load("ViT-B/16", device= device)   # loads already in eval mode
+        self.encoder, _ = clip.load("ViT-B/16", device=device)   # loads already in eval mode
 
     def forward(self, x):
         """

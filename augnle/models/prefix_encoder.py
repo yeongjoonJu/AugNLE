@@ -21,6 +21,7 @@ class PrefixEncoder(torch.nn.Module):
             )
         else:
             self.embedding = torch.nn.Embedding(config.prefix_len, config.hidden_size)
+        self.dropout = torch.nn.Dropout(config.prefix_dropout)
 
     def weight_initialization(self, embed_vector):
         embed_vector = embed_vector.expand(self.embedding.weight.shape[0], -1)
@@ -28,8 +29,8 @@ class PrefixEncoder(torch.nn.Module):
 
     def forward(self, prefix: torch.Tensor):
         if self.prefix_projection:
-            prefix_tokens = self.embedding(prefix)
+            prefix_tokens = self.dropout(self.embedding(prefix))
             prompt_output = self.trans(prefix_tokens)
         else:
-            prompt_output = self.embedding(prefix)
+            prompt_output = self.dropout(self.embedding(prefix))
         return prompt_output

@@ -1,4 +1,6 @@
+from asyncio import DatagramTransport
 import json, os, random
+from xml.etree.ElementInclude import include
 from tqdm import tqdm
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -6,7 +8,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 from PIL import Image
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 
 from pytorch_lightning import LightningDataModule
@@ -36,266 +38,487 @@ def random_data_choice(anno, num, pseudo=False):
     return fewshot_data
 
 
-class BaseDataModule(LightningDataModule):
-    def __init__(self, hparams, mode, turn, data_aug = False, ):
-        super().__init__()
-        self.save_hyperparameters(hparams)
-        self.cfg = hparams
+class VQAXEvalDataset(Dataset):
+    def __init__(self, path, img_dir, tokenizer, args):
 
+        self.tokenizer = tokenizer
+        self.transform = transforms.Compose([transforms.Resize((args.img_size, args.img_size)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        self.max_seq_len = 40       # question + <bos> The answer is <answer> becase <explanation> <eos>
+        self.data = json.load(open(path, 'r'))
+        self.ids_list = list(self.data.keys())
+        self.img_dir = img_dir
+
+    def __getitem__(self, i):
+        quention_id = self.ids_list[i]
+        sample = self.data[quention_id]
+        img_name = sample['image_name']
+        text_a = utils.proc_ques(sample['question'])    # question
+
+        # tokenization process
+        q_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<answer>', '<explanation>'])
+        tokens = self.tokenizer.tokenize(text_a)
+        segment_ids = [q_segment_id] * len(tokens)
+
+        answer = [self.tokenizer.bos_token] + self.tokenizer.tokenize(" the answer is")
+        answer_len = len(answer)
+        tokens += answer 
+
+        segment_ids += [a_segment_id] * answer_len
+
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        input_ids = torch.tensor(input_ids, dtype=torch.long)
+        segment_ids = torch.tensor(segment_ids, dtype=torch.long)
+        
+        img_path = os.path.join(self.img_dir, img_name)
+        img = Image.open(img_path).convert('RGB')
+        img = self.transform(img)
+        qid = torch.LongTensor([int(quention_id)])
+        
+        return (img, qid, input_ids, segment_ids)
+
+    def __len__(self):
+        return len(self.ids_list)
+
+
+class ExGenDataset(Dataset):
+    def __init__(self, relabeled_data):
+        super().__init__()
+
+        for sample in relabeled_data:
+            pass
+        self.inputs = []
+        self.img_names = []
+        for img_name, label_pair in tqdm(data.items()):
+            obj_label = label_pair["obj_label"]
+            captions = label_pair["captions"]
+            for caption in captions:
+                # composition of text
+                # because [E] -> [Q], the answer is [A]
+                caption = re.sub(r"[.]", "", caption)
+                t_e_input = f"because {caption}."
+                t_e_input = f"{t_e_input} {obj_label}"
+                t_e_input = t_e_input.strip()
+
+                # tokenize and encode
+                t_e_input = tokenizer(t_e_input.lower()).input_ids
+                self.inputs.append(t_e_input)
+                self.img_names.append(img_name)
+
+    def __getitem__(self, index):
+        enc_input = torch.tensor(self.inputs[index], dtype=torch.long)
+
+        return enc_input, self.img_names[index]
+    
+    def __len__(self):
+        return len(self.inputs)
+
+
+class BaseDataset(Dataset):
+    def __init__(self, image_dir, nle_anno_path, tokenizer, cfg, include_captioning=False, teacher_mode=False):
+        super().__init__()
+        self.cfg = cfg
+
+        self.teacher_mode = teacher_mode
         self.img_transform = transforms.Compose([transforms.Resize((self.cfg.img_size, self.cfg.img_size)),
                                                  transforms.ToTensor(),
                                                  transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.cfg.lm_backbone)
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<answer>', '<explanation>']})
-        self.dataset = {}
+        self.tokenizer = tokenizer
 
-        # Load dataset
-        train_anno = json.load(open(hparams.train_anno_path, "r"))
-        
-        # The number of few-shot data
-        if hparams.fewshot_ratio > 0:
-            self.fewshot_num = int(len(train_anno) * hparams.fewshot_ratio)
-        else:
-            self.fewshot_num = hparams.fewshot_num
-
-        # Train dataset preprocessing
-        train_anno = random_data_choice(train_anno, self.fewshot_num, pseudo=self.cfg.pseudo_data)
-        dataset_name = "VQA-X"
-        self.dataset["train"] = self.get_dataset(train_anno, mode=f"{dataset_name}_{mode}_train")
-        
-        # Data augmentation
-        if data_aug:
-            if os.path.exists(self.cfg.pseudo_labels_pth):
-                dataset_name = "aug-data"
-                aug_anno = json.load(open(self.cfg.pseudo_labels_pth, "r"))
-                # VQA-X augmentation
-                # self.dataset["train"] = self.dataset["train"] + self.get_dataset(aug_anno, mode=f"{dataset_name}_{mode}_train", data_aug = True)  
-                # Caption data
-
-                self.dataset["train"] = self.dataset["train"] + self.get_dataset(aug_anno, mode=f"{dataset_name}_{mode}_train", data_aug = True)
-                
-
-        valid_anno = json.load(open(hparams.valid_anno_path, "r"))
-        dataset_name = "VQA-X"
-        self.dataset["valid"] = self.get_dataset(valid_anno, mode=f"{dataset_name}_{mode}_valid")
-        
-        # captioning data
-        caption_ann = json.load(open(hparams.captioning_pth, "r"))
-        # self.dataset["pseudo"] = self.get_dataset(pseudo_ann, mode=mode+"_pseudo")
-        
-        # For test
-        dataset_name = "nocaps"
-        pseudo_data = self.get_dataset(caption_ann, mode=f"{dataset_name}_{mode}_pseudo")
-        self.dataset["pseudo"] = utils.split_dataset(pseudo_data, len(pseudo_data)// hparams.iteration)[turn]
-        
-    def train_dataloader(self):
-        return DataLoader(self.dataset["train"], shuffle=True, batch_size=self.cfg.train_batch_size, \
-                        pin_memory=True, num_workers=self.cfg.n_train_workers)#, collate_fn=self.collate_fn)
-
-    def val_dataloader(self):
-        return DataLoader(self.dataset["valid"], shuffle=False, batch_size=self.cfg.train_batch_size, \
-                        pin_memory=True, num_workers=self.cfg.n_valid_workers)#, collate_fn=self.collate_fn)
-        
-    def predict_dataloader(self):
-            return DataLoader(self.dataset["pseudo"], shuffle=False, batch_size= 1, \
-                            pin_memory=True, num_workers=self.cfg.n_valid_workers)
-            
-    def test_dataloader(self):
-            return DataLoader(self.dataset["pseudo"], shuffle=False, batch_size= 1, \
-                            pin_memory=True, num_workers=self.cfg.n_valid_workers)
-
-    
-class VQAX_ST_DataModule(BaseDataModule):
-    # Teacher >> [I] [Q] the answer is [A] --> <bos> because [E] <eos>
-    # Student >> [I] [Q] --> <bos> the answer is [A] because [E] <eos>
-    
-    # Pseudo Labeling Teacher >> [I] [Q] the answer is [A] <bos> because --> Explanation
-    
-    # Pseudo Labeling Student >> [I] [Q] <bos> the answer is --> [A] because [E] <eos>
-
-
-    def preprocessing(self, img_path, question, answer, explanation, mode):
         q_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<answer>', '<explanation>'])
+        self.q_seg_id = q_segment_id
+        self.a_seg_id = a_segment_id
+        self.e_seg_id = e_segment_id
+        self.answer_split = self.tokenizer(" the answer is ").input_ids
+        self.reason_split = self.tokenizer(" because ").input_ids
+
+        # Load cache
+        cached_path = os.path.join(self.cfg.cached_dir, "total.cache")
+        if os.path.exists(cached_path):
+            logger.info("Loading features from cached file %s", cached_path)
+            self.datasets = torch.load(cached_path)
+            with open(os.path.join(self.cfg.cached_dir, "nle_ids_data.json"), "r") as fin:
+                self.nle_ids_data = json.load(fin)
+            if include_captioning:
+                with open(os.path.join(self.cfg.cached_dir, "relabeled_ids_data.json"), "r") as fin:
+                    self.relabeled_ids_data = json.load(fin)
+        else:
+            # Captioning data
+            if include_captioning:
+                assert len(cfg.captioning_image_dirs)==len(cfg.captioning_anno_paths)
+                self.captioning_data = []
+                for img_dir, anno_path in zip(cfg.captioning_image_dirs, cfg.captioning_anno_paths):
+                    with open(anno_path, "r") as fin:
+                        anno = json.load(fin)
+                    for sample in anno:
+                        sample["img_name"] = os.path.join(img_dir, sample["img_name"])
+                        self.captioning_data.append(sample)
+            
+            with open(nle_anno_path, "r") as fin:
+                anno = json.load(fin)
+            self.datasets, self.nle_ids_data, self.relabeled_ids_data \
+                = self.get_dataset(image_dir, anno, include_captioning=include_captioning)
+
+            if not os.path.exists(self.cfg.cached_dir):
+                os.mkdir(self.cfg.cached_dir)
+
+            # Caching            
+            torch.save(self.datasets, os.path.join(self.cfg.cached_dir, "total.cache"))
+            with open(os.path.join(self.cfg.cached_dir, "nle_ids_data.json"), "w") as fout:
+                json.dump(self.nle_ids_data, fout, indent=2)
+            if self.relabeled_ids_data:
+                with open(os.path.join(self.cfg.cached_dir, "relabeled_ids_data.json"), "w") as fout:
+                    json.dump(self.relabeled_ids_data, fout, indent=2)
+    
+    def get_collate_fn(self):
+        # Collate function definition
+        def collate_wrapper(batch):
+            batch = list(zip(*batch))
+            sample = {}
+
+            # max len
+            max_len = max([x.size(0) for x in batch[0]])
+
+            inputs = torch.zeros((len(batch[0]), max_len), dtype=torch.long) + self.tokenizer.pad_token_id
+            # attn_mask = torch.zeros((len(batch[0]), max_len), dtype=torch.long)
+            labels = torch.zeros((len(batch[1]), max_len), dtype=torch.long) - 100
+            seg_ids = torch.zeros((len(batch[2]), max_len), dtype=torch.long) + self.e_seg_id
+            for i, x in enumerate(batch[0]):
+                inputs[i,:x.size(0)] = x
+                # attn_mask[i,:x.size(0)] = 1.0
+                labels[i,:x.size(0)] = batch[1][i]
+                seg_ids[i,:x.size(0)] = batch[2][i]
+
+            sample["inputs"] = inputs
+            # sample["attn_mask"] = attn_mask
+            sample["labels"] = labels
+            sample["segment_ids"] = seg_ids
+            sample["image"] = torch.stack(batch[3])
+            sample["image_path"] = batch[4]
+
+            return sample
+        
+        return collate_wrapper
+
+    def get_dataset(self, image_dir, anno, include_captioning=False):
+        raise NotImplementedError
+
+    def get_relabeled_targets(self):
+        raise self.relabeled_ids_data
+
+
+class VQAX_full_shot_Dataset(BaseDataset):
+    def get_dataset(self, image_dir, anno, include_captioning=False):
+        ids_list = list(anno.keys())
+        index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
+        for k,v in anno.items():   
+            if len(v['explanation']) > 1:   # some questions have more than one explanation 
+                ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+
+        nle_data = []
+        for i in tqdm(range(len(ids_list)), desc="Constructing NLE data"):
+            question_id = ids_list[i]
+            sample = anno[question_id]
+            img_name = sample['image_name']
+            question_txt = utils.proc_ques(sample['question'])    # question
+            answer_txt = utils.proc_ans(sample['answers'])
+            exp_idx = index_tracker[question_id]
+            img_path = os.path.join(image_dir, img_name)
+
+            # if one more explanations
+            if exp_idx > 0:
+                index_tracker[question_id] -= 1    # decrease usage
+
+            explain_txt = sample['explanation'][exp_idx]
+
+            question = self.tokenizer(question_txt).input_ids
+            answer = self.tokenizer(answer_txt).input_ids
+            explain = self.tokenizer(explain_txt).input_ids
+
+            nle_data.append({"image_path": img_path, "question": question, "answer": answer, "explain": explain})
+
+        relabeled_data = []
+        if include_captioning:
+            for i in tqdm(range(len(self.captioning_data)), desc="Constructing Captioning data"):
+                sample = self.captioning_data[i]
+                question = self.tokenizer(sample["question"]).input_ids
+                answer = self.tokenizer(sample["answer"]).input_ids
+                explain = self.tokenizer(sample["reason"]).input_ids
+                relabeled_data.append({
+                    "image_path": sample["img_name"], "question": question,
+                    "answer": answer, "explain": explain})
+
+        data = []    
+        # Preprocessing dataset
+        for sample in tqdm(nle_data+relabeled_data, desc="Tokenizing and Tensorizing"):
+            input_ids, segment_ids, labels, img = self.preprocess(
+                sample["image_path"], sample["question"], sample["answer"], sample["explain"])
+            data.append({"image_path": sample["image_path"], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})
+
+        return data, nle_data, relabeled_data
+    
+    def preprocess(self, img_path, question_ids, answer_ids, explanation_ids):
         # Image    
         # img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
         img = Image.open(img_path).convert('RGB')
-        img = self.img_transform(img)     
-        if mode in ["train_student", "valid_student"]:
-            input = self.tokenizer.tokenize(f"{question}")
-            answer_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" the answer is {answer}")
-            explanation_token = self.tokenizer.tokenize(f" because {explanation}") + [self.tokenizer.eos_token]
-            segment_ids = [q_segment_id] * len(input) + [a_segment_id] * len(answer) + [e_segment_id] * len(explanation_token)
-            output = answer_token + explanation_token   
-            labels = [-100] * len(input) + [-100] + output[1:] # labels will be shifted in the model, so for now set them same as tokens
-            input += output
-            
-            if len(input) > self.cfg.dec_max_len :
-                input = input[:self.cfg.dec_max_len]
-            labels = labels[:self.cfg.dec_max_len]
-            segment_ids = segment_ids[:self.cfg.dec_max_len]
-            
-            # padddings
-            input = input + ([self.tokenizer.pad_token] * (self.cfg.dec_max_len - len(input)))
-            labels = labels + ([-100] * (self.cfg.dec_max_len - len(labels)))
-            segment_ids += ([e_segment_id] * (self.cfg.dec_max_len - len(segment_ids)))       
-            
-        elif mode in ["train_teacher", "valid_teacher"]:
-            question_token = self.tokenizer.tokenize(f"{question}")
-            answer_token = self.tokenizer.tokenize(f" the answer is {answer}")
-            output = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" because {explanation}") + [self.tokenizer.eos_token]
-            segment_ids = [q_segment_id] * len(question_token) + [a_segment_id] * len(answer_token) + [e_segment_id] * len(output)
-            input = question_token + answer_token
-            labels = [-100] * len(input) + [-100] + output[1:] # labels will be shifted in the model, so for now set them same as tokens
-            input += output
-            if len(input) > self.cfg.dec_max_len :
-                input = input[:self.cfg.dec_max_len]
-            labels = labels[:self.cfg.dec_max_len]
-            segment_ids = segment_ids[:self.cfg.dec_max_len]
-            
-            # padddings
-            input = input + ([self.tokenizer.pad_token] * (self.cfg.dec_max_len - len(input)))
-            labels = labels + ([-100] * (self.cfg.dec_max_len - len(labels)))
-            segment_ids += ([e_segment_id] * (self.cfg.dec_max_len - len(segment_ids)))   
-            
-        elif mode == "pseudo_student":
-            input = self.tokenizer.tokenize(f"{question}")
-            answer_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" the answer is")
-            segment_ids = [q_segment_id] * len(input) + [a_segment_id] * len(answer_token)
-            explanation_token = self.tokenizer.tokenize(explanation) + [self.tokenizer.eos_token]
-            input += answer_token
-            output = self.tokenizer.tokenize(f"{answer} {explanation}") + [self.tokenizer.eos_token]
-            labels = [-100] * len(input) + output # labels will be shifted in the model, so for now set them same as tokens
-        
-        elif mode == "pseudo_teacher":
-            question_token = self.tokenizer.tokenize(f"{question}")
-            answer_token = self.tokenizer.tokenize(f" {answer}")
-            explanation_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" because")
-            input = question_token + answer_token + explanation_token
-            output = self.tokenizer.tokenize(explanation) + [self.tokenizer.eos_token]
-            segment_ids = [q_segment_id] * len(question_token) + [a_segment_id] * len(answer_token) + [e_segment_id] * len(explanation_token)       
-            labels = [-100] * len(input) + output # labels will be shifted in the model, so for now set them same as tokens
-            
+
+        if self.teacher_mode:
+            input_ids = question_ids.copy()
+            input_ids.extend(self.answer_split.copy())
+            input_ids.extend(answer_ids)
+            output = [self.tokenizer.bos_token_id]
+            output.extend(self.reason_split.copy())
+            output.extend(explanation_ids)
+            output.append(self.tokenizer.eos_token_id)
+            segment_ids = [self.q_seg_id]*len(question_ids)
+            segment_ids.extend([self.a_seg_id]*(len(answer_ids)+len(self.answer_split)))
+            segment_ids.extend([self.e_seg_id]*len(output))
         else:
-            raise NotImplementedError
-        
-        # token -> ids
-        input_ids = self.tokenizer.convert_tokens_to_ids(input)
+            input_ids = question_ids.copy()
+            output_a = [self.tokenizer.bos_token_id]
+            output_a.extend(self.answer_split.copy())
+            output_a.extend(answer_ids)
+            output_e = self.reason_split.copy()
+            output_e.extend(explanation_ids)
+            output_e.append(self.tokenizer.eos_token_id)
+            segment_ids = [self.q_seg_id]*len(input_ids)
+            segment_ids.extend([self.a_seg_id]*len(output_a))
+            segment_ids.extend([self.e_seg_id]*len(output_e))
+            output = output_a + output_e
 
+        labels = [-100]*len(input_ids)
+        labels.append(-100)
+        labels.extend(output[1:]) # labels will be shifted in the model, so for now set them same as tokens
+        input_ids.extend(output)
+
+        # tensorize
         input_ids = torch.tensor(input_ids, dtype=torch.long)
-
-        labels = [self.tokenizer.convert_tokens_to_ids(t) if t!=-100 else t for t in labels]
         labels = torch.tensor(labels, dtype=torch.long)
         segment_ids = torch.tensor(segment_ids, dtype=torch.long)
+        img = self.img_transform(img)
         
         return input_ids, segment_ids, labels, img
 
-    def get_dataset(self, anno, mode, data_aug=False):
-        data_name, stage, mode = mode.split("_")
-        cached_filename = f"{data_name}_shot-{self.fewshot_num}_{mode}_{stage}_seed-{self.cfg.seed}.cache"
-        q_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<answer>', '<explanation>'])
-        
-        # Caching
-        if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)) and not data_aug:
+    def __getitem__(self, index):
+        sample = self.datasets[index]
+        return sample["input_ids"], sample["labels"], sample["segment_ids"], sample["img"], sample["image_path"]
     
-            logger.info("Loading features from cached file %s", cached_filename)
-            datasets = torch.load(os.path.join(self.cfg.cached_dir, cached_filename))
-        else:
-            datasets = []
+    def __len__(self):
+        return len(self.datasets)
+
+
+# class VQAX_few_shot_DataModule(BaseDataModule):
+#     def get_dataset(self):
+#         # Caching
+#         if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)) and not data_aug:
+#             logger.info("Loading features from cached file %s", cached_filename)
+#             datasets = torch.load(os.path.join(self.cfg.cached_dir, cached_filename))
+#         else:
+#             # The number of few-shot data
+#             if self.cfg.fewshot_ratio > 0:
+#                 self.fewshot_num = int(len(self.train_anno) * self.cfg.fewshot_ratio)
+#             elif self.cfg.fewshot_num is None:
+#                 # external use
+#                 pass
+                
+#             # Train dataset preprocessing
+#             train_anno = random_data_choice(train_anno, self.fewshot_num, pseudo=self.cfg.pseudo_data)
+#             self.dataset["train"] = self.get_dataset(train_anno, mode="train")
+    
             
-            # VQA-X dataset
-            if data_name == "VQA-X":
-                
-                ids_list = list(anno.keys())
-                index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
-                for k,v in anno.items():   
-                    if len(v['explanation']) > 1:   # some questions have more than one explanation 
-                        ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+    
+# class VQAX_ST_DataModule(BaseDataModule):
+#     # Teacher >> [I] [Q] the answer is [A] --> <bos> because [E] <eos>
+#     # Student >> [I] [Q] --> <bos> the answer is [A] because [E] <eos>
+    
+#     # Pseudo Labeling Teacher >> [I] [Q] the answer is [A] <bos> because --> Explanation
+    
+#     # Pseudo Labeling Student >> [I] [Q] <bos> the answer is --> [A] because [E] <eos>
 
-                # Set image directory
-                if mode=="train":
-                    img_dir = self.cfg.image_dir + "/train2014"
-                else:
-                    img_dir = self.cfg.image_dir + "/val2014"
-                
-                for i in tqdm(range(len(anno)), desc= f"Processing {data_name} {stage}-{mode} data"):
-                    question_id = ids_list[i]
-                    sample = anno[question_id]
-                    img_name = sample['image_name']
-                    image_id = sample["image_id"]
-                    question_txt = utils.proc_ques(sample['question'])    # question
-                    answer_txt = utils.proc_ans(sample['answers'])
-                    exp_idx = index_tracker[question_id]
-                    explain_txt = sample['explanation'][exp_idx]
-                    img_pth = os.path.join(img_dir,img_name)
 
-                    # if one more explanations
-                    if exp_idx > 0:
-                        index_tracker[question_id] -= 1    # decrease usage
-                    
-                    # Preprocessing dataset
-                    input_ids, segment_ids, labels, img = \
-                        self.preprocessing(img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
-                    
-                    datasets.append({"qid": [image_id], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})    
-                    
-            # Captioning dataset
-            elif data_name == "nocaps":
-                for sample in tqdm(anno, desc= f"Processing {data_name} {stage}-{mode} data"):
-                    img_name = os.path.join(data_name,sample['img_name'])
-                    question_txt = utils.proc_ques(sample['question'])    # question
-                    answer_txt = sample['answer']
-                    explain_txt = sample['reason']
-                    img_pth = os.path.join(self.cfg.image_dir, img_name)
-                    input_ids, segment_ids, labels, img = \
-                        self.preprocessing(img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
-                    
-                    qid = [img_name]
-                    datasets.append({"qid": qid, "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})                    
-
-            # Pseudo labeled data for augmentation
-            elif data_name == "aug-data":
-                
-                ids_list = list(anno.keys())
-                index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
-                for k,v in anno.items():   
-                    if len(v['explanation']) > 1:   # some questions have more than one explanation 
-                        ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
-
-                for i in tqdm(range(len(anno)), desc= f"Processing {data_name} {stage}-{mode} data"):
-                    question_id = ids_list[i]
-                    sample = anno[question_id]
-                    img_name = sample["image_id"]
-                    question_txt = utils.proc_ques(sample['question'])    # question
-                    answer_txt = utils.proc_ans(sample['answers'])
-                    exp_idx = index_tracker[question_id]
-                    explain_txt = sample['explanation'][exp_idx]
-                    img_pth = os.path.join(self.cfg.image_dir,img_name)
-
-                    # if one more explanations
-                    if exp_idx > 0:
-                        index_tracker[question_id] -= 1    # decrease usage
-                    
-                    # Preprocessing dataset
-                    input_ids, segment_ids, labels, img = \
-                        self.preprocessing( img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
-                    
-                    datasets.append({"qid": [img_name], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})                    
-
-            else:
-                pass
+#     def preprocessing(self, img_path, question, answer, explanation, mode):
+#         q_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<answer>', '<explanation>'])
+#         # Image    
+#         # img = self.img_transform(Image.open(img_path).convert("RGB"), return_tensors="pt").pixel_values
+#         img = Image.open(img_path).convert('RGB')
+#         img = self.img_transform(img)     
+#         if mode in ["train_student", "valid_student"]:
+#             input = self.tokenizer.tokenize(f"{question}")
+#             answer_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" the answer is {answer}")
+#             explanation_token = self.tokenizer.tokenize(f" because {explanation}") + [self.tokenizer.eos_token]
+#             segment_ids = [q_segment_id] * len(input) + [a_segment_id] * len(answer) + [e_segment_id] * len(explanation_token)
+#             output = answer_token + explanation_token   
+#             labels = [-100] * len(input) + [-100] + output[1:] # labels will be shifted in the model, so for now set them same as tokens
+#             input += output
             
-            if not os.path.exists(self.cfg.cached_dir):
-                os.mkdir(self.cfg.cached_dir)
+#             if len(input) > self.cfg.dec_max_len :
+#                 input = input[:self.cfg.dec_max_len]
+#             labels = labels[:self.cfg.dec_max_len]
+#             segment_ids = segment_ids[:self.cfg.dec_max_len]
             
-            # save cached file
-            if not data_aug:
-                torch.save(datasets, os.path.join(self.cfg.cached_dir, cached_filename))
-                
-            # Not caching when data augmentation
-            else:
-                pass
+#             # padddings
+#             input = input + ([self.tokenizer.pad_token] * (self.cfg.dec_max_len - len(input)))
+#             labels = labels + ([-100] * (self.cfg.dec_max_len - len(labels)))
+#             segment_ids += ([e_segment_id] * (self.cfg.dec_max_len - len(segment_ids)))       
+            
+#         elif mode in ["train_teacher", "valid_teacher"]:
+#             question_token = self.tokenizer.tokenize(f"{question}")
+#             answer_token = self.tokenizer.tokenize(f" the answer is {answer}")
+#             output = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" because {explanation}") + [self.tokenizer.eos_token]
+#             segment_ids = [q_segment_id] * len(question_token) + [a_segment_id] * len(answer_token) + [e_segment_id] * len(output)
+#             input = question_token + answer_token
+#             labels = [-100] * len(input) + [-100] + output[1:] # labels will be shifted in the model, so for now set them same as tokens
+#             input += output
+#             if len(input) > self.cfg.dec_max_len :
+#                 input = input[:self.cfg.dec_max_len]
+#             labels = labels[:self.cfg.dec_max_len]
+#             segment_ids = segment_ids[:self.cfg.dec_max_len]
+            
+#             # padddings
+#             input = input + ([self.tokenizer.pad_token] * (self.cfg.dec_max_len - len(input)))
+#             labels = labels + ([-100] * (self.cfg.dec_max_len - len(labels)))
+#             segment_ids += ([e_segment_id] * (self.cfg.dec_max_len - len(segment_ids)))   
+            
+#         elif mode == "pseudo_student":
+#             input = self.tokenizer.tokenize(f"{question}")
+#             answer_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" the answer is")
+#             segment_ids = [q_segment_id] * len(input) + [a_segment_id] * len(answer_token)
+#             explanation_token = self.tokenizer.tokenize(explanation) + [self.tokenizer.eos_token]
+#             input += answer_token
+#             output = self.tokenizer.tokenize(f"{answer} {explanation}") + [self.tokenizer.eos_token]
+#             labels = [-100] * len(input) + output # labels will be shifted in the model, so for now set them same as tokens
+        
+#         elif mode == "pseudo_teacher":
+#             question_token = self.tokenizer.tokenize(f"{question}")
+#             answer_token = self.tokenizer.tokenize(f" {answer}")
+#             explanation_token = [self.tokenizer.bos_token] + self.tokenizer.tokenize(f" because")
+#             input = question_token + answer_token + explanation_token
+#             output = self.tokenizer.tokenize(explanation) + [self.tokenizer.eos_token]
+#             segment_ids = [q_segment_id] * len(question_token) + [a_segment_id] * len(answer_token) + [e_segment_id] * len(explanation_token)       
+#             labels = [-100] * len(input) + output # labels will be shifted in the model, so for now set them same as tokens
+            
+#         else:
+#             raise NotImplementedError
+        
+#         # token -> ids
+#         input_ids = self.tokenizer.convert_tokens_to_ids(input)
 
-        return datasets
+#         input_ids = torch.tensor(input_ids, dtype=torch.long)
+
+#         labels = [self.tokenizer.convert_tokens_to_ids(t) if t!=-100 else t for t in labels]
+#         labels = torch.tensor(labels, dtype=torch.long)
+#         segment_ids = torch.tensor(segment_ids, dtype=torch.long)
+        
+#         return input_ids, segment_ids, labels, img
+
+#     def get_dataset(self, anno, mode, data_aug=False):
+#         data_name, stage, mode = mode.split("_")
+#         cached_filename = f"{data_name}_shot-{self.fewshot_num}_{mode}_{stage}_seed-{self.cfg.seed}.cache"
+#         q_segment_id, a_segment_id, e_segment_id = self.tokenizer.convert_tokens_to_ids(['<question>', '<answer>', '<explanation>'])
+        
+#         # Caching
+#         if os.path.exists(os.path.join(self.cfg.cached_dir, cached_filename)) and not data_aug:
+    
+#             logger.info("Loading features from cached file %s", cached_filename)
+#             datasets = torch.load(os.path.join(self.cfg.cached_dir, cached_filename))
+#         else:
+#             datasets = []
+            
+#             # VQA-X dataset
+#             if data_name == "VQA-X":
+                
+#                 ids_list = list(anno.keys())
+#                 index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
+#                 for k,v in anno.items():   
+#                     if len(v['explanation']) > 1:   # some questions have more than one explanation 
+#                         ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+
+#                 # Set image directory
+#                 if mode=="train":
+#                     img_dir = self.cfg.image_dir + "/train2014"
+#                 else:
+#                     img_dir = self.cfg.image_dir + "/val2014"
+                
+#                 for i in tqdm(range(len(anno)), desc= f"Processing {data_name} {stage}-{mode} data"):
+#                     question_id = ids_list[i]
+#                     sample = anno[question_id]
+#                     img_name = sample['image_name']
+#                     image_id = sample["image_id"]
+#                     question_txt = utils.proc_ques(sample['question'])    # question
+#                     answer_txt = utils.proc_ans(sample['answers'])
+#                     exp_idx = index_tracker[question_id]
+#                     explain_txt = sample['explanation'][exp_idx]
+#                     img_pth = os.path.join(img_dir,img_name)
+
+#                     # if one more explanations
+#                     if exp_idx > 0:
+#                         index_tracker[question_id] -= 1    # decrease usage
+                    
+#                     # Preprocessing dataset
+#                     input_ids, segment_ids, labels, img = \
+#                         self.preprocessing(img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
+                    
+#                     datasets.append({"qid": [image_id], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})    
+                    
+#             # Captioning dataset
+#             elif data_name == "nocaps":
+#                 for sample in tqdm(anno, desc= f"Processing {data_name} {stage}-{mode} data"):
+#                     img_name = os.path.join(data_name,sample['img_name'])
+#                     question_txt = utils.proc_ques(sample['question'])    # question
+#                     answer_txt = sample['answer']
+#                     explain_txt = sample['reason']
+#                     img_pth = os.path.join(self.cfg.image_dir, img_name)
+#                     input_ids, segment_ids, labels, img = \
+#                         self.preprocessing(img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
+                    
+#                     qid = [img_name]
+#                     datasets.append({"qid": qid, "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})                    
+
+#             # Pseudo labeled data for augmentation
+#             elif data_name == "aug-data":
+                
+#                 ids_list = list(anno.keys())
+#                 index_tracker = {k: len(v['explanation']) - 1 for k,v in anno.items()}
+#                 for k,v in anno.items():   
+#                     if len(v['explanation']) > 1:   # some questions have more than one explanation 
+#                         ids_list += [str(k)] * (len(v['explanation']) - 1) # duplicate them for loading. -1 because one explanation is already in ids_list
+
+#                 for i in tqdm(range(len(anno)), desc= f"Processing {data_name} {stage}-{mode} data"):
+#                     question_id = ids_list[i]
+#                     sample = anno[question_id]
+#                     img_name = sample["image_id"]
+#                     question_txt = utils.proc_ques(sample['question'])    # question
+#                     answer_txt = utils.proc_ans(sample['answers'])
+#                     exp_idx = index_tracker[question_id]
+#                     explain_txt = sample['explanation'][exp_idx]
+#                     img_pth = os.path.join(self.cfg.image_dir,img_name)
+
+#                     # if one more explanations
+#                     if exp_idx > 0:
+#                         index_tracker[question_id] -= 1    # decrease usage
+                    
+#                     # Preprocessing dataset
+#                     input_ids, segment_ids, labels, img = \
+#                         self.preprocessing( img_pth, question_txt, answer_txt, explain_txt, f"{mode}_{stage}")
+                    
+#                     datasets.append({"qid": [img_name], "input_ids":input_ids, "labels": labels, "segment_ids":segment_ids, "img":img})                    
+
+#             else:
+#                 pass
+            
+#             if not os.path.exists(self.cfg.cached_dir):
+#                 os.mkdir(self.cfg.cached_dir)
+            
+#             # save cached file
+#             if not data_aug:
+#                 torch.save(datasets, os.path.join(self.cfg.cached_dir, cached_filename))
+                
+#             # Not caching when data augmentation
+#             else:
+#                 pass
+
+#         return datasets
     
     
     
