@@ -196,8 +196,8 @@ if __name__ == '__main__':
     args = opts.get_args()
     
     # NLX-GPT baseline
-    # trainer = BaseTrainer("nlx_gpt", "student", args)
-    trainer = Self_E(args)
+    trainer = BaseTrainer("nlx_gpt", "student", args)
+    # trainer = Self_E(args)
     if args.mode=="train":
         trainer.fit()
     else:

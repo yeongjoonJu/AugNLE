@@ -61,7 +61,7 @@ class VQAXEvalDataset(Dataset):
         tokens = self.tokenizer.tokenize(text_a)
         segment_ids = [q_segment_id] * len(tokens)
 
-        answer = [self.tokenizer.bos_token] + self.tokenizer.tokenize(" the answer is")
+        answer = [self.tokenizer.bos_token] + self.tokenizer.tokenize(" the answer is ")
         answer_len = len(answer)
         tokens += answer 
 
