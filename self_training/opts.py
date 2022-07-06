@@ -18,7 +18,7 @@ def get_args():
                             help="Number of updates steps to accumulate before performing a backward/update pass.")
     optim_args.add_argument( "--val_check_interval",type=float, default=0.5, 
                             help="validation check interval ratio")
-    optim_args.add_argument( "--gradient_cliping",type=float, default=0.5, 
+    optim_args.add_argument( "--gradient_cliping",type=float, default=1.0, 
                             help=" The value at which to clip gradients ")
     optim_args.add_argument('--max_epochs', type=int, default=30, help='Max epoch size')
     optim_args.add_argument('--requires_grad', action="store_true", help='requiring gradients')
@@ -27,8 +27,7 @@ def get_args():
     
     """Data related arguments"""
     data_args = parser.add_argument_group('Data related arguments')
-    # data_args.add_argument('--enc_max_len', type=int, default=256, help='Max sequence legnth')
-    # data_args.add_argument('--dec_max_len', type=int, default=128, help='Max sequence legnth')
+    data_args.add_argument("--img_encoded", action="store_true")
     # NLE dataset
     data_args.add_argument('--nle_train_anno_path', type=str, default=None, help='Path to nle annotation for training')
     data_args.add_argument('--nle_valid_anno_path', type=str, default=None, help='Path to nle annotation for validation')
@@ -41,7 +40,7 @@ def get_args():
     data_args.add_argument("--captioning_image_dirs", nargs="+")
     # External datasets
     data_args.add_argument("--external_data", type=bool, default=False)
-
+    data_args.add_argument("--max_seq_len", type=int, default=40)
     data_args.add_argument('--img_size', type=int, default=224, help='Image size')        
     data_args.add_argument("--fewshot_ratio", type=float, default=-1, help="Ratio of few-shot data")
     data_args.add_argument("--fewshot_num", type=int, default=None, help="The number of few-shot data")

@@ -29,6 +29,7 @@ class NLX_GPT(LightningModule):
         self.save_hyperparameters(hparams)
         self.tokenizer = tokenizer
         self.mode = None
+        self.img_encoded = hparams.img_encoded
 
         config = AutoConfig.from_pretrained('distilgpt2')
 
@@ -49,7 +50,7 @@ class NLX_GPT(LightningModule):
         if stage=="fit":
             self.total_steps = self.hparams.total_steps
             self.warmup_steps = self.hparams.warmup_steps
-        elif stage=="test":
+        elif stage=="test" or stage=="predict":
             self.results_full = []
             self.results_exp = []
 
@@ -57,6 +58,7 @@ class NLX_GPT(LightningModule):
             self.seg_token_ids = self.tokenizer.convert_tokens_to_ids(SEG_TOKENS)
             self.because_token_id = self.tokenizer.convert_tokens_to_ids('Ġbecause')
             self.eos_token_id = [self.tokenizer.eos_token_id]
+            self.special_token_ids = [self.tokenizer.eos_token_id, self.tokenizer.pad_token_id] + self.seg_token_ids
         
     
     def configure_optimizers(self):
@@ -80,45 +82,52 @@ class NLX_GPT(LightningModule):
             num_warmup_steps=self.warmup_steps,
             num_training_steps=self.total_steps,
         )
-        scheduler = {"scheduler": scheduler, "interval": "step"}
+        scheduler = {"scheduler": scheduler, "interval": "step", "name": "lr"}
         return [optimizer], [scheduler]
 
     def forward(self, **inputs):
         return self.model(**inputs)
 
     def training_step(self,  batch, batch_idx):
-        # image_embedding = self.image_encoder(batch["image"])
-        img_emb = self.image_encoder(batch["image"])
+        if self.img_encoded:
+            img_emb = batch["img_embeddings"]
+        else:
+            img_emb = self.image_encoder(batch["image"])
+
         outputs = self(input_ids=batch["inputs"],
-                        past_key_values=None, 
-                        attention_mask=None, 
-                        token_type_ids=batch["segment_ids"], 
-                        position_ids=None,
-                        encoder_hidden_states=img_emb, 
-                        encoder_attention_mask=None, 
-                        labels=batch["labels"], 
-                        use_cache=False, 
-                        return_dict=True)
+                    past_key_values=None, 
+                    attention_mask=None, 
+                    token_type_ids=batch["segment_ids"], 
+                    position_ids=None,
+                    encoder_hidden_states=img_emb, 
+                    encoder_attention_mask=None, 
+                    labels=batch["labels"], 
+                    use_cache=False, 
+                    return_dict=True)
     
         loss = outputs.loss
             
         # self.log(f"{self.hparams.selfe_mode}_train_loss", loss)
         self.log(f"{self.mode}_train_loss", loss)
+            
         return loss
 
     def validation_step(self, batch, batch_idx):
-        # image_embedding = self.image_encoder(batch["image"])
-        img_emb = self.image_encoder(batch["image"])
+        if self.img_encoded:
+            img_emb = batch["img_embeddings"]
+        else:
+            img_emb = self.image_encoder(batch["image"])
+
         outputs = self(input_ids=batch["inputs"],
-                        past_key_values=None, 
-                        attention_mask=None, 
-                        token_type_ids=batch["segment_ids"], 
-                        position_ids=None,
-                        encoder_hidden_states=img_emb, 
-                        encoder_attention_mask=None, 
-                        labels=batch["labels"], 
-                        use_cache=False, 
-                        return_dict=True)
+                    past_key_values=None, 
+                    attention_mask=None, 
+                    token_type_ids=batch["segment_ids"], 
+                    position_ids=None,
+                    encoder_hidden_states=img_emb, 
+                    encoder_attention_mask=None, 
+                    labels=batch["labels"], 
+                    use_cache=False, 
+                    return_dict=True)
         
         loss = outputs.loss
         # self.log(f"{self.hparams.selfe_mode}_val_loss", loss)
@@ -130,7 +139,7 @@ class NLX_GPT(LightningModule):
         img, img_id, input_ids, segment_ids = batch
         image_embedding = self.image_encoder(img)
         
-        max_len = 40
+        max_len = 20
         always_exp = False
         no_sample = True
         current_output = []
@@ -154,7 +163,7 @@ class NLX_GPT(LightningModule):
             logits = top_filtering(logits, top_k= self.hparams.top_k, top_p= self.hparams.top_p)
             probs = F.softmax(logits, dim=-1)
             prev = torch.topk(probs, 1)[1] if no_sample else torch.multinomial(probs, 1)
-            if prev.item() == self.eos_token_id:
+            if prev.item() in self.special_token_ids:
                 break     
     
             if not always_exp:
@@ -198,307 +207,89 @@ class NLX_GPT(LightningModule):
             json.dump(self.results_full, w)
         
         filter_and_get_scores(resFileExp, save_scores_pathExp, self.results_full, self.results_exp, self.hparams.nle_test_anno_path)
-
-
-class Self_training(LightningModule):
-    def __init__(
-        self, hparams, **kwargs,):
-        super().__init__()
-        # Save Hyper parameters
-        self.save_hyperparameters(hparams)
-        # version difference
-        #self.hparams.update(hparams)
-        self.learning_rate= self.hparams.learning_rate
-        self.adam_epsilon= self.hparams.adam_epsilon
-        self.warmup_steps= self.hparams.warmup_steps
-        self.weight_decay= self.hparams.weight_decay
-        self.train_batch_size= self.hparams.train_batch_size
-        self.eval_batch_size= self.hparams.eval_batch_size
-        self.img_size = self.hparams.img_size
-        
-        #Configuration
-        self.tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
-        num_new_tokens = self.tokenizer.add_special_tokens({'pad_token': '<pad>','additional_special_tokens': ['<question>', '<answer>', '<explanation>']})
-        self.eos_token_id = self.tokenizer.eos_token_id
-        self.pad_token_id = self.tokenizer.pad_token_id
-        self.config = AutoConfig.from_pretrained('distilgpt2')
-        self.config.img_size = self.img_size
-        self.config.add_cross_attention = True
-        self.model = GPT2LMHeadModel.from_pretrained('distilgpt2', config = self.config)
-        self.model.resize_token_embeddings(len(self.tokenizer))
-
-        SEG_TOKENS = ['<question>', '<answer>', '<explanation>']
-        self.seg_token_ids = self.tokenizer.convert_tokens_to_ids(SEG_TOKENS)
-        
-        # else:
-        #     model_name = 'nle_model_{}'.format(str(self.hparams.epoch))
-        #     tokenizer_name = 'nle_gpt2_tokenizer_0'
-        #     self.tokenizer = GPT2Tokenizer.from_pretrained(tokenizer_name)
-        #     self.model = GPT2LMHeadModel.from_pretrained(self.ckpt_path + self.hparams.model_name)
-        self.img_transform = transforms.Compose([transforms.Resize((self.img_size,self.img_size)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.image_encoder = ImageEncoder(self.device)
-        self.change_requires_grad(self.image_encoder, False)
-    
-    def change_requires_grad(self, model, req_grad):
-        for p in model.parameters():
-            p.requires_grad = req_grad
-            
-    def forward(self, **inputs):
-        return self.model(**inputs)
-
-    def training_step(self,  batch, batch_idx):
-        # image_embedding = self.image_encoder(batch["image"])
-        img_emb = self.image_embedding(batch["image"])
-        outputs = self(input_ids=batch["inputs"],
-                        past_key_values=None, 
-                        attention_mask=None, 
-                        token_type_ids=batch["segment_ids"], 
-                        position_ids=None,
-                        encoder_hidden_states=img_emb, 
-                        encoder_attention_mask=None, 
-                        labels=batch["labels"], 
-                        use_cache=False, 
-                        return_dict=True)
-    
-        loss = outputs.loss
-            
-        # self.log(f"{self.hparams.selfe_mode}_train_loss", loss)
-        self.log("train_loss", loss)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        # image_embedding = self.image_encoder(batch["image"])
-        img_emb = self.image_embedding(batch["image"])
-        outputs = self(input_ids=batch["inputs"],
-                        past_key_values=None, 
-                        attention_mask=None, 
-                        token_type_ids=batch["segment_ids"], 
-                        position_ids=None,
-                        encoder_hidden_states=img_emb, 
-                        encoder_attention_mask=None, 
-                        labels=batch["labels"], 
-                        use_cache=False, 
-                        return_dict=True)
-        
-        loss = outputs.loss
-        # self.log(f"{self.hparams.selfe_mode}_val_loss", loss)
-        self.log("val_loss", loss)
-
-        return loss
     
     def predict_step(self, batch, batch_idx):
-        input_ids = batch["inputs"]
-        ori_input_ids = input_ids.clone().cpu().numpy().tolist()
-        segment_ids = batch["segment_ids"]
-        
-        img_emb = self.image_embedding(batch["image"])
-        because_token = self.tokenizer.convert_tokens_to_ids('Ġbecause')
-        always_exp = False
-        do_sample = False
-        
-        batch_size = input_ids.shape[0]
-        eos_token_id = torch.LongTensor([self.eos_token_id])
-        eos_token_id = eos_token_id.expand(batch_size).to(torch.cuda.current_device())
-        eos_appear = torch.BoolTensor([False]*batch_size)
-        outputs = None
-        for step in range(128 + 1):
-            if step == 128:
-                break
-            
-            outputs = self.model(input_ids=input_ids, 
-                                past_key_values=None, 
-                                attention_mask=None, 
-                                token_type_ids=segment_ids, 
-                                position_ids=None, 
-                                encoder_hidden_states=img_emb, 
-                                encoder_attention_mask=None, 
-                                labels=None, 
-                                use_cache=False, 
-                                return_dict=True)
-            
-            lm_logits = outputs.logits 
-            logits = lm_logits[:, -1, :] / self.hparams.temperature
-            filtered_logits = top_k_top_p_filtering(logits, top_k= self.hparams.top_k, top_p= self.hparams.top_p)
-            probs = F.softmax(filtered_logits, dim=-1)
-            prev = torch.multinomial(probs, dim=-1) if do_sample else torch.argmax(probs, dim=-1).unsqueeze(-1)
-            eos_appear = torch.logical_or(eos_appear, torch.eq(prev, eos_token_id))
-            if eos_appear.prod():
-                break
-                
-            if not always_exp:
-                if prev.item() != because_token:
-                    new_segment = self.seg_token_ids[1]   # answer segment
-                else:
-                    new_segment = self.seg_token_ids[2]   # explanation segment
-                    always_exp = True
-            else:
-                new_segment = self.seg_token_ids[2]   # explanation segment
-                
-            new_segment = torch.LongTensor([new_segment]).to(torch.cuda.current_device())
-            new_segment = new_segment.expand(batch_size)
+        device = torch.cuda.current_device()
 
-            input_ids = torch.cat((input_ids, prev), dim = 1)
-            segment_ids = torch.cat((segment_ids, new_segment), dim = 1)
-            if outputs is None:
-                outputs = prev
-            else:
-                outputs = torch.cat((outputs, prev), dim=1)
+        input_ids = batch["input_ids"].to(device)
+        segment_ids = batch["segment_ids"].to(device)
 
-        # labels = batch["labels"].cpu().numpy().tolist()
-        # outputs = outputs.cpu().numpy().tolist()
-
-        # decodeds = []
-        # for b, out in enumerate(outputs):
-        #     label = [id for id in labels[b] if id != -100]
-        #     label = label[:label.index(self.eos_token_id)]
-        #     out = out[:out.index(self.eos_token_id)]
-        #     input_sample = ori_input_ids[b]
-        #     input_sample = input_sample[:input_sample.index(self.eos_token_id)]
-        #     decoded_out = self.tokenizer.decode(out, clean_up_tokenization_spaces=True)
-        #     decoded_in = self.tokenizer.decode(input_sample, clean_up_tokenization_spaces=True)
-        #     decoded_label = self.tokenizer.decode(label, clean_up_tokenization_spaces=True)
-            
-        #     decodeds.append({"image_path": batch["image_path"][b], \
-        #         "input":decoded_in, "output":decoded_out, "label":decoded_label})
-        
-        # return decodeds
-        return outputs.cpu()
-
-
-    def image_embedding(self,qid):
-        img_file = qid[0][0].split("/")[0]
-        cached_filename = f"{img_file}.cache"
-        image_file = os.path.join(self.hparams.cached_dir,cached_filename)
-        # caching loading
-        if os.path.exists(image_file):
-            img_dict = torch.load(image_file)
+        if self.img_encoded:
+            img_emb = batch["img_embeddings"].to(device)
         else:
-            img_dict = self.img_caching(os.path.join(self.hparams.image_dir,img_file))
-            
-        for idx, img_id in enumerate(qid):    
-            if idx == 0:
-                img = img_dict[img_id[0]]
-            else:
-                img = torch.stack(img,img_dict[img_id[0]])
-        img.to(torch.cuda.current_device())
-        return img
-                
-    def img_caching(self,img_dir):
-        file_lst = os.listdir(img_dir)
-        emb_dict = {}
-        for file in tqdm(file_lst, desc= f"Processing image..."):
-            file_pth = os.path.join(img_dir, file)
-            img = Image.open(file_pth).convert('RGB')
-            img = self.img_transform(img).unsqueeze(0).to(torch.cuda.current_device())
+            img = batch["image"].to(device)
             img_emb = self.image_encoder(img)
-            emb_dict[file]= img_emb
-        return emb_dict
+        
+        id = batch["id"]
 
+        do_sample = False
 
-    def test_step(self,batch,batch_idx):
-        qid, input_ids, labels, segment_ids,  img = batch.values()
-        image_embedding = self.image_encoder(img)
-        because_token = self.tokenizer.convert_tokens_to_ids('Ġbecause')
-        max_len = 20
-        always_exp = False
-        no_sample = True
-        current_output = []
-        qid = qid[0][0]
-        for step in range(max_len + 1):
-            if step == max_len:
-                break
-            
-            outputs = self.model(input_ids=input_ids, 
-                            past_key_values=None, 
-                            attention_mask=None, 
-                            token_type_ids=segment_ids, 
-                            position_ids=None, 
-                            encoder_hidden_states=image_embedding, 
-                            encoder_attention_mask=None, 
-                            labels=None, 
-                            use_cache=False, 
-                            return_dict=True)
-            
-            lm_logits = outputs.logits 
-            logits = lm_logits[0, -1, :] / self.hparams.temperature
-            logits = top_filtering(logits, top_k= self.hparams.top_k, top_p= self.hparams.top_p)
-            probs = F.softmax(logits, dim=-1)
-            prev = torch.topk(probs, 1)[1] if no_sample else torch.multinomial(probs, 1)
-            if prev.item() in self.special_tokens_ids:
-                break     
-    
-            if not always_exp:
+        batch_size = input_ids.shape[0]
+        eos_token_id = torch.LongTensor(self.eos_token_id).to(device)
+        eos_token_id = eos_token_id.unsqueeze(0).expand(batch_size, -1)
+        eos_appear = torch.BoolTensor([False]*batch_size).to(device)
+        always_exp = torch.BoolTensor([False]*batch_size).to(device)
+
+        because_token = self.tokenizer.convert_tokens_to_ids('Ġbecause') # integer value
+        because_token = torch.LongTensor([because_token]).to(device)
+        because_token = because_token.unsqueeze(0).expand(batch_size, -1)
+
+        # For batch prediction
+        sample_lens = (input_ids >= 0).sum(dim=1)
+        min_sample_len = sample_lens.min()
+        max_sample_len = sample_lens.max()
+
+        generated = [[] for _ in range(batch_size)]
+        with torch.no_grad():
+            for step in range(100 + 1):
+                if step == 100:
+                    break
+
+                slicing = min_sample_len < max_sample_len
                 
-                if prev.item() != because_token:
-                    new_segment = self.special_tokens_ids[-2]   # answer segment
+                outputs = self.model(input_ids=input_ids[:,:min_sample_len] if slicing else input_ids,
+                                    past_key_values=None, 
+                                    attention_mask=None, 
+                                    token_type_ids=segment_ids[:, :min_sample_len] if slicing else segment_ids,
+                                    position_ids=None, 
+                                    encoder_hidden_states=img_emb, 
+                                    encoder_attention_mask=None, 
+                                    labels=None, 
+                                    use_cache=False, 
+                                    return_dict=True)
+                
+                lm_logits = outputs.logits 
+                logits = lm_logits[:, -1, :] / self.hparams.temperature
+                filtered_logits = top_k_top_p_filtering(logits, top_k= self.hparams.top_k, top_p= self.hparams.top_p)
+                probs = F.softmax(filtered_logits, dim=-1)
+                prev = torch.multinomial(probs, dim=-1) if do_sample else torch.argmax(probs, dim=-1).unsqueeze(-1)
+                eos_appear = torch.logical_or(eos_appear, torch.eq(prev, eos_token_id))
+                if eos_appear.prod():
+                    break
+
+                new_segment = torch.LongTensor([self.seg_token_ids[2]]).to(device)
+                new_segment = new_segment.unsqueeze(0).expand(batch_size, -1)
+
+                if not always_exp.prod():
+                    always_exp = torch.logical_or(always_exp, torch.eq(prev, because_token).squeeze(-1))
+                    new_segment[torch.logical_not(always_exp).unsqueeze(1)] = self.seg_token_ids[1]
+
+                if min_sample_len < max_sample_len:
+                    replaced = input_ids[:,min_sample_len]<0
+                    prev = prev.squeeze(-1)
+                    input_ids[:,min_sample_len][replaced] = prev[replaced]
+                    segment_ids[:,min_sample_len][replaced] = new_segment.squeeze(-1)[replaced]
+                    min_sample_len += 1
+                    for k, r in enumerate(replaced):
+                        if r.item():
+                            generated[k].append(prev[k].item())
                 else:
-                    new_segment = self.special_tokens_ids[-1]   # explanation segment
-                    always_exp = True
-            else:
-                new_segment = self.special_tokens_ids[-1]   # explanation segment     
-                
-            new_segment = torch.LongTensor([new_segment]).to(torch.cuda.current_device())
-            current_output.append(prev.item())
-            input_ids = torch.cat((input_ids, prev.unsqueeze(0)), dim = 1)
-            segment_ids = torch.cat((segment_ids, new_segment.unsqueeze(0)), dim = 1)
-    
-        decoded_sequences = self.tokenizer.decode(current_output, skip_special_tokens=True).lstrip()
-        self.results_full.append({"image_id": qid, "caption": decoded_sequences})
+                    input_ids = torch.cat((input_ids, prev), dim = 1)
+                    segment_ids = torch.cat((segment_ids, new_segment), dim = 1)
+                    for k, t in enumerate(prev.squeeze(-1)):
+                        generated[k].append(t.item())
         
-        if 'because' in decoded_sequences:
-            cut_decoded_sequences = decoded_sequences.split('because')[-1].strip()
-        else:
-            cut_decoded_sequences = " ".join(decoded_sequences.split()[2:])
-        
-        self.results_exp.append({"image_id": qid, "caption": cut_decoded_sequences})         
-        return {"reults_full" : self.results_full, "results_exp": self.results_exp}
+        for k, sample in enumerate(generated):
+            generated[k] = {"idx":id[k], "sample": sample}
 
-    def test_epoch_end(self, batch_parts):
-        resFileExp = os.path.join(self.hparams.output_dir , 'captions_exp_{self.hparams.selfe_mode}'+ '.json')
-        unf_resFileExp = os.path.join(self.hparams.output_dir , 'unf_captions_exp_{self.hparams.selfe_mode}' + '.json') 
-        unf_resFileFull = os.path.join(self.hparams.output_dir , 'unf_captions_full_{self.hparams.selfe_mode}'  + '.json')
-        save_scores_pathExp = os.path.join(self.hparams.output_dir , 'scores_exp_{self.hparams.selfe_mode}' + '.json')
-        
-        with open(unf_resFileExp, 'w') as w:
-            json.dump(self.results_exp, w)
-            
-        with open(unf_resFileFull, 'w') as w:
-            json.dump(self.results_full, w)
-        
-        filter_and_get_scores(resFileExp, save_scores_pathExp, self.results_full, self.results_exp, self.hparams.selfe_mode)    
-    
-    def setup(self,stage):
-        self.results_full = []
-        self.results_exp = []
-        # self.tokenizer = self.trainer.datamodule.tokenizer
-        # SPECIAL_TOKENS = ['<|endoftext|>', '<pad>', '<question>', '<answer>', '<explanation>']
-        # self.special_tokens_ids = self.tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS)
-        # # Setting
-        self.total_steps = self.args.total_steps
-        self.warmup_steps = self.args.warmup_steps
-
-    def configure_optimizers(self):
-        """Prepare optimizer and schedule (linear warmup and decay)"""
-        model = self.model
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": self.hparams.weight_decay,
-            },
-            {
-                "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-        ]
-        optimizer = AdamW(optimizer_grouped_parameters, lr=self.hparams.learning_rate, eps=self.hparams.adam_epsilon)
-
-        scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=self.warmup_steps,
-            num_training_steps=self.total_steps,
-        )
-        scheduler = {"scheduler": scheduler, "interval": "step"}
-        return [optimizer], [scheduler]
+        return generated

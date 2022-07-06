@@ -103,7 +103,7 @@ def get_object_labels(captions, args):
         batch_image = []
         n_items = args.batch_size if num_imgs-(b+args.batch_size) >= 0 else num_imgs-b
         for i in range(n_items):
-            img_name = img_ids[b*args.batch_size+i]
+            img_name = img_ids[b+i]
             if img_name[-4:]!=".jpg":
                 img_name = img_name + ".jpg"
             img_path = os.path.join(args.image_dir, img_name)
@@ -116,7 +116,7 @@ def get_object_labels(captions, args):
         # keep only predictions with 0.7+ confidence
         batch_probas = outputs['logits'].softmax(-1)
         for i in range(n_items):
-            img_name = img_ids[b*args.batch_size+i]
+            img_name = img_ids[b+i]
             probas = batch_probas[i,:,:-1]
             keep = probas.max(-1).values > 0.7
             label = get_detected_objs(probas[keep], id2label)

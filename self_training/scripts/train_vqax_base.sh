@@ -5,11 +5,11 @@
 # "../captioning_data/nocaps/image" \
 CKPT_DIR="./ckpts"
 
-CUDA_VISIBLE_DEVICES=0 python trainer.py \
+CUDA_VISIBLE_DEVICES=1 python trainer.py \
 --mode train \
 --cached_dir cached/self_e_nocap_flickr \
---experiment_name flickr_nocap_b64_e5_lr5e-4 \
---max_epochs 5 \
+--experiment_name base_nocap_flickr_b64_e30_lr2e-5 \
+--max_epochs 30 \
 --ngpu 1 \
 --warmup_ratio 0.1 \
 --img_encoded \
@@ -28,7 +28,6 @@ CUDA_VISIBLE_DEVICES=0 python trainer.py \
 ../captioning_data/flickr30k/image \
 --train_batch_size 64 \
 --eval_batch_size 16 \
---learning_rate 5e-4 \
+--learning_rate 2e-5 \
 --gradient_accumulation_steps 1 \
---val_check_interval 1.0 \
---max_iter 3
+--val_check_interval 1.0

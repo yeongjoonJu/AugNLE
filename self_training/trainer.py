@@ -1,14 +1,16 @@
 import os
+from random import random
 from transformers import GPT2Tokenizer
 import torch
 from pytorch_lightning import Trainer, seed_everything
 from torch.utils.data import DataLoader
-from dataloader import VQAX_full_shot_Dataset, VQAXEvalDataset
-from models.lightning import Self_training, NLX_GPT
+from dataloader import VQAX_full_shot_Dataset, VQAXEvalDataset, VQAXPredDataset
+from models.lightning import NLX_GPT
 import opts
 import datetime
+from tqdm import tqdm
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 import json
 # from models.utils import pseudo_labeling
 
@@ -58,15 +60,16 @@ class BaseTrainer(object):
 
         monitor = f"{monitor}_val_loss"
         filename = "{epoch:02d}-{"+monitor+":.3f}"
+        lr_monitor = LearningRateMonitor(logging_interval="step")
         checkpoint_callback = checkpoint_callback = ModelCheckpoint(
             monitor=monitor,
             mode = "min",
-            save_top_k = 2,
+            save_top_k = 3,
             dirpath=ckpt_dir,
             filename=filename,
         )
 
-        return [checkpoint_callback]
+        return [checkpoint_callback, lr_monitor]
 
     def get_dataloaders(self, train_dataset, valid_dataset):
         collate_fn = train_dataset.get_collate_fn()
@@ -84,8 +87,10 @@ class BaseTrainer(object):
             pass
         else:
             fewshot = False
-            train_dataset = VQAX_full_shot_Dataset(self.args.nle_train_image_dir, self.args.nle_train_anno_path, self.tokenizer, self.args, include_captioning=False)
-            valid_dataset = VQAX_full_shot_Dataset(self.args.nle_valid_image_dir, self.args.nle_valid_anno_path, self.tokenizer, self.args, include_captioning=False)
+            train_dataset = VQAX_full_shot_Dataset(self.args.nle_train_image_dir, self.args.nle_train_anno_path, \
+                                                self.tokenizer, self.args, include_captioning=self.args.captioning_anno_paths is not None)
+            valid_dataset = VQAX_full_shot_Dataset(self.args.nle_valid_image_dir, self.args.nle_valid_anno_path, \
+                                                self.tokenizer, self.args, include_captioning=False)
 
         train_loader, valid_loader = self.get_dataloaders(train_dataset, valid_dataset)
         self.args.total_steps = len(train_loader) // self.args.gradient_accumulation_steps // self.args.ngpu * self.args.max_epochs
@@ -103,6 +108,7 @@ class BaseTrainer(object):
         model = NLX_GPT.load_from_checkpoint(self.args.load_ckpt_path, strict=False, tokenizer=self.tokenizer, hparams=self.args)
         dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=self.args.n_valid_workers)
         self.trainer.test(model, dataloader)
+    
 
 
 class Self_E(BaseTrainer):
@@ -143,17 +149,59 @@ class Self_E(BaseTrainer):
         else:
             warmup_steps = self.args.warmup_steps
         
-        args.total_steps = total_steps
-        args.warmup_steps = warmup_steps
-        model = NLX_GPT(self.tokenizer, hparams=args)
+        self.args.total_steps = total_steps
+        self.args.warmup_steps = warmup_steps
+        model = NLX_GPT(self.tokenizer, hparams=self.args)
         model.mode = "student"
         self.trainer.fit(model, train_loader, valid_loader)
 
         return model
 
-    def generate_explanation(self, model):
-        predictor = Trainer(accelerator="gpu", gpus=1)
-        pass
+    def renew_trainer(self, mode):
+        # Define checkpoint callback
+        ckpt_callback = self.get_checkpoint_callback(monitor=mode)
+        # Define logger
+        logger = WandbLogger(project="Self-E", name=args.experiment_name)
+        # Define trainer
+        self.trainer = Trainer(max_epochs=args.max_epochs,
+                            accelerator = "gpu",
+                            gpus= args.ngpu,
+                            strategy = "ddp",
+                            val_check_interval=args.val_check_interval,
+                            accumulate_grad_batches = args.gradient_accumulation_steps,
+                            gradient_clip_val=args.gradient_cliping,
+                            check_val_every_n_epoch = 1,
+                            callbacks=ckpt_callback,
+                            logger=logger,)
+
+    def predict(self, model, data):
+        print("Preparing prediction...")
+        dataset = VQAXPredDataset(data, self.tokenizer, self.args)
+        collate_fn = dataset.get_collate_fn()
+        dataloader = DataLoader(dataset, shuffle=False, batch_size=self.args.eval_batch_size, \
+                                num_workers=self.args.n_valid_workers, collate_fn=collate_fn)
+        preds = self.trainer.predict(model, dataloader)
+        print("Complete prediction")
+        # Batch flatten
+        results = []
+        for b in preds:
+            results.extend(b)
+
+        filtered = {}
+        n_fails = 0
+        for gen in results:
+            sample = gen["sample"]
+            idx = gen["idx"]
+            try:
+                sample = sample[:sample.index(self.tokenizer.eos_token_id)]
+                filtered[idx] = sample
+            except Exception as e:
+                n_fails += 1
+
+        print("The number of failures:", n_fails)
+        
+        return filtered
+
     
     def fit(self):
         assert self.args.fewshot_ratio < 1.0
@@ -163,32 +211,29 @@ class Self_E(BaseTrainer):
         else:
             fewshot = False
             train_dataset = VQAX_full_shot_Dataset(self.args.nle_train_image_dir, self.args.nle_train_anno_path,
-                                                self.tokenizer, self.args, include_captioning=False, teacher_mode=True)
+                                                self.tokenizer, self.args, include_captioning=True, teacher_mode=True)
             valid_dataset = VQAX_full_shot_Dataset(self.args.nle_valid_image_dir, self.args.nle_valid_anno_path,
                                                 self.tokenizer, self.args, include_captioning=False, teacher_mode=True)
 
-        # self.trainer.callbacks = self.get_checkpoint_callback(monitor="teacher")
         model = NLX_GPT(self.tokenizer, hparams=args)
+        # model = NLX_GPT.load_from_checkpoint(self.args.load_ckpt_path, strict=False, tokenizer=self.tokenizer, hparams=self.args)
         for it in range(self.args.max_iter):
             # teacher training
-            # model = self.teacher_training(model, train_dataset, valid_dataset)
+            model = self.teacher_training(model, train_dataset, valid_dataset)
+            relabel_data = train_dataset.get_relabel_targets()
+            pseudo_labeled = self.predict(model, relabel_data)
+            train_dataset.renew_explanations(pseudo_labeled)
 
             # Changing mode
             train_dataset.change_mode("student")
             valid_dataset.change_mode("student")
-            self.trainer.callbacks = self.get_checkpoint_callback(monitor="student")
+            self.renew_trainer("student")
             model = self.student_training(train_dataset, valid_dataset)
 
-            # E = self.trainer.fit(teacher, I, Q, A) # <= NLE data / captioning data
-            # # explanation generation using teacher model
-            # E = self.trainer.predict(teacher, I, Q, A) # <= unlabeled and captioning data (part1)
-            # # student training
-            # A, E = self.trainer.fit(student, I, Q) # <= captioning data / NLE data / pseudo-labeled
-            # # answer and explanation generation using student model
-            # A, E = self.trainer.predict(student, I, Q) # <= captioning data (part2)
-            # # check convergence
-            # self.trainer.test(student)
-            # teacher = student
+            # Changing mode
+            train_dataset.change_mode("teacher")
+            valid_dataset.change_mode("teacher")
+            self.renew_trainer("teacher")
 
         
 if __name__ == '__main__':
@@ -196,12 +241,9 @@ if __name__ == '__main__':
     args = opts.get_args()
     
     # NLX-GPT baseline
-    trainer = BaseTrainer("nlx_gpt", "student", args)
-    # trainer = Self_E(args)
+    # trainer = BaseTrainer("nlx_gpt", "student", args)
+    trainer = Self_E(args)
     if args.mode=="train":
         trainer.fit()
     else:
         trainer.test()
-
-    # self_e = Self_E(args)
-    # self_e.fit()

@@ -3,8 +3,8 @@ CKPT_DIR="./ckpts"
 
 CUDA_VISIBLE_DEVICES=0 python trainer.py \
 --mode test \
---output_dir outputs/base_b32 \
---load_ckpt_path ckpts/nlx_gpt_base_b32/epoch=29-val_loss=0.693.ckpt \
+--output_dir outputs/fn_base_e30 \
+--load_ckpt_path ckpts/base_nocap_flickr_b64_e30_lr2e-5/epoch=21-student_val_loss=1.093.ckpt \
 --eval_batch_size 1 \
 --ngpu 1 \
 --img_size 224 \
