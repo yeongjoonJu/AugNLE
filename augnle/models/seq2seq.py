@@ -21,9 +21,11 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
 
         self.prefix_encoder_A = PrefixEncoder(config)
         self.prefix_encoder_B = PrefixEncoder(config)
+        # self.prefix_encoder_C = PrefixEncoder(config)
         self.prefix_seqs = [
             torch.arange(self.prefix_len).unsqueeze(0).long(),
-            torch.arange(self.prefix_len).unsqueeze(0).long()
+            torch.arange(self.prefix_len).unsqueeze(0).long(),
+            # torch.arange(self.prefix_len).unsqueeze(0).long()
         ]
     
     def prepare_inputs_for_generation(self,input_ids,
@@ -41,6 +43,20 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 "use_cache": use_cache,
                 "generate" : True
                 }
+
+    def class_label_initialization(self, class_idx_A, class_idx_B):
+        vec_A = self.shared(class_idx_A.unsqueeze(0))
+        if len(vec_A.size()) == 3:
+            vec_A = vec_A.mean(1)
+        vec_B = self.shared(class_idx_B.unsqueeze(0))
+        if len(vec_B.size()) == 3:
+            vec_B = vec_B.mean(1)
+        # vec_C = self.shared(class_idx_C.unsqueeze(0))
+        # if len(vec_C.size()) == 3:
+        #     vec_C = vec_C.mean(1)
+        self.prefix_encoder_A.weight_initialization(vec_A)
+        self.prefix_encoder_B.weight_initialization(vec_B)
+        # self.prefix_encoder_C.weight_initialization(vec_C)
 
     def prepare_inputs_for_generation(self, input_ids,
                                       past=None, attention_mask=None,
@@ -63,12 +79,19 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
         prefix_tokens = self.prefix_seqs[1].expand(batch_size,-1).to(self.device)
         return self.prefix_encoder_B(prefix_tokens)
 
+    # def get_prompt_C(self, batch_size):
+    #     prefix_tokens = self.prefix_seqs[2].expand(batch_size,-1).to(self.device)
+    #     return self.prefix_encoder_C(prefix_tokens)
+
 
     def get_mixed_prompt(self, batch_size):
         prefix_tokens1 = self.prefix_seqs[0].expand(batch_size//2,-1).to(self.device)
-        prefix_tokens2 = self.prefix_seqs[1].expand(batch_size-batch_size//2,-1).to(self.device)
+        prefix_tokens2 = self.prefix_seqs[1].expand(batch_size-(batch_size//2),-1).to(self.device)
+        # prefix_tokens3 = self.prefix_seqs[2].expand(batch_size-(2*batch_size//3),-1).to(self.device)
         prefix_tokens1 = self.prefix_encoder_A(prefix_tokens1)
         prefix_tokens2 = self.prefix_encoder_B(prefix_tokens2)
+        # prefix_tokens3 = self.prefix_encoder_C(prefix_tokens3)
+        # prefix_tokens = torch.cat((prefix_tokens1, prefix_tokens2, prefix_tokens3), dim=0)
         prefix_tokens = torch.cat((prefix_tokens1, prefix_tokens2), dim=0)
 
         return prefix_tokens
@@ -97,6 +120,7 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 encoder_only=None,
                 prompting_A=False,
                 prompting_B=False,
+                # prompting_C=False,
                 prompting_AB=False):
         
         use_cache = use_cache if use_cache is not None else self.config.use_cache
@@ -110,6 +134,9 @@ class T5PrefixForConditionalGeneration(T5ForConditionalGeneration):
                 prefix_embeds = self.get_prompt_A(batch_size=batch_size)
             elif prompting_B:
                 prefix_embeds = self.get_prompt_B(batch_size=batch_size)
+            # elif prompting_C:
+            #     prefix_embeds = self.get_prompt_C(batch_size=batch_size)
+
             
             if prompting_AB or prompting_A or prompting_B:
                 prefix_attention_mask = torch.ones(batch_size, self.prefix_len).to(self.device)

@@ -53,5 +53,9 @@ wget https://storage.googleapis.com/localized-narratives/annotations/open_images
 wget https://storage.googleapis.com/localized-narratives/annotations/open_images_test_captions.jsonl
 ~~~
 
+~~~bash
+pip install jsonlines
+~~~
+
 COCO-caption\
 https://github.com/tylin/coco-caption.git

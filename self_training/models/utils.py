@@ -1,6 +1,6 @@
 import re
 import json
-import  os
+import  os, sys
 import re
 import torch
 from torch.nn import CrossEntropyLoss
@@ -231,32 +231,31 @@ def split_dataset(data_lst,num):
     return [data_lst[i: i+num] for i in range(0, len(data_lst), num)]
 
 
-def filter_and_get_scores(resFileExp, save_scores_pathExp, full_predictions, exp_predictions, selfe_mode):
-    caption_save_path = 'cococaption/results/' 
+def filter_and_get_scores(resFileExp, save_scores_pathExp, full_predictions, exp_predictions, test_anno_path):
     annFileExp = 'cococaption/annotations/vqaX_test_annot_exp.json'
     annFileFull = 'cococaption/annotations/vqaX_test_annot_full.json'
-    all_file = json.load(open("/media/storage/coco/VQA-X/annotated/vqaX_test.json", 'r'))
+    all_file = json.load(open(test_anno_path, 'r'))
     
-    if selfe_mode == "student":
-        gt_answers = {}
-        for key,value in all_file.items():
-            gt_answers[value['image_id']] = proc_ans(value['answers'])
-            
-        pred_answers = {}
-        for item in full_predictions:
-            pred_answers[item['image_id']] = item['caption'].split("because")[0].strip()
-            
-        correct_keys = []
-        for key,value in pred_answers.items():
-            gt_answer = gt_answers[str(key)]
-            # to measure accuracy for VQA, please change "==" to "in" (if value in gt_answer:)
-            if value == gt_answer:
-                correct_keys.append(key)
-        exp_preds = [item for item in exp_predictions if item['image_id'] in correct_keys]
-        with open(resFileExp, 'w') as w:
-            json.dump(exp_preds, w)
-    else:
-        return None
+    gt_answers = {}
+    for key,value in all_file.items():
+        gt_answers[int(key)] = proc_ans(value['answers'])
+        
+    pred_answers = {}
+    for item in full_predictions:
+        pred_answers[item['image_id']] = item['caption'].split("because")[0].strip()
+        
+    correct_keys = []
+    for key,value in pred_answers.items():
+        gt_answer = gt_answers[key]
+        # to measure accuracy for VQA, please change "==" to "in" (if value in gt_answer:)
+        if value == gt_answer:
+            correct_keys.append(key)
+
+    exp_preds = [item for item in exp_predictions if item['image_id'] in correct_keys]
+    
+    with open(resFileExp, 'w') as w:
+        json.dump(exp_preds, w)
+
     coco = COCO(annFileExp)
     cocoRes = coco.loadRes(resFileExp)
     cocoEval = COCOEvalCap(coco, cocoRes)
